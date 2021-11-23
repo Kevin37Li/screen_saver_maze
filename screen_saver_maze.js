@@ -44,7 +44,7 @@ export class ScreenSaverMaze extends Scene {
         //POV camera location
         this.initial_camera_location = Mat4.look_at(vec3(0, 0, 10), vec3(0, 0, 0), vec3(0, 1, 0));
         //Scale factor of maze
-        this.scalefactor = 2;
+        this.scalefactor = 10;
         //Birds eye view of maze
         this.birds_eye_location = Mat4.look_at(vec3(0,10*this.scalefactor,0),vec3(0,0,0),vec3(0,0,-1))//.times(Mat4.translation(-12*this.scalefactor,-12*this.scalefactor,-4.5*this.scalefactor));
         this.isW95 = false;
@@ -126,11 +126,12 @@ export class ScreenSaverMaze extends Scene {
         
         // create the building blocks of the maze (model transform matrices for cubes)
         let half = this.scalefactor/2;
-        let wall_xy = model_transform.times(Mat4.translation(half,half,0)).times(Mat4.scale(half,half,0.01));
-        let wall_yz = model_transform.times(Mat4.translation(0,half,half)).times(Mat4.scale(0.01,half,half));
-        let floor = model_transform.times(Mat4.translation(half,0,half)).times(Mat4.scale(half,0.01,half));
-        let bluefloor = model_transform.times(Mat4.translation(half,0.01,half)).times(Mat4.scale(half,0.01,half));
-        let ceiling = model_transform.times(Mat4.translation(half,this.scalefactor,half)).times(Mat4.scale(half,0.01,half));
+        let squish = 0.01*this.scalefactor;
+        let wall_xy = model_transform.times(Mat4.translation(half,half,0)).times(Mat4.scale(half,half,squish));
+        let wall_yz = model_transform.times(Mat4.translation(0,half,half)).times(Mat4.scale(squish,half,half));
+        let floor = model_transform.times(Mat4.translation(half,0,half)).times(Mat4.scale(half,squish,half));
+        let bluefloor = model_transform.times(Mat4.translation(half,squish,half)).times(Mat4.scale(half,squish,half));
+        let ceiling = model_transform.times(Mat4.translation(half,this.scalefactor,half)).times(Mat4.scale(half,squish,half));
         
         // specify each type of material
         let wallMatl = this.materials.plastic;
@@ -270,99 +271,7 @@ export class ScreenSaverMaze extends Scene {
         //this.shapes.cube.draw(context, program_state, floor, this.materials.plastic);
 
 
-        /*
-
-        // ------------------
-        // DRAWING ALL SHAPES
-        // ------------------
-
-        // SUN
-        // ---
-        //update the model_transform such that the scale in all 3 directions oscillates from 1-3 on a period of 10 seconds.
-        model_transform = model_transform.times(Mat4.scale(n,n,n))
-
-        //red given by color(1,0,0,1), white given by color(1,1,1,1) - need the middle two arguments to oscillate between 0 and 1 on a period of 10 seconds.
-        //this.shapes.sphere.draw(context,program_state,model_transform,this.materials.test.override({color:color(1,1+1*Math.sin(Math.PI*t/5),1+1*Math.sin(Math.PI*t/5),1)}));
-        this.shapes.sphere.draw(context,program_state,model_transform,this.materials.sun.override({color:color(1,0.5+0.5*Math.sin(Math.PI*t/5),0.5+0.5*Math.sin(Math.PI*t/5),1)}));
-
-
-        // Planet 1
-        // --------
-        //color and material is already specified for planet_1. The rotation is set to be a period of 6.28 s (1s ~ 1 rad of rotation), at a radius of 5 from the sun.
-        this.planet_1true = (Mat4.rotation(t,0,1,0)).times(Mat4.translation(0,0,5));
-        //create inverse of object rotation matrix for camera tracking.
-        this.planet_1 = Mat4.translation(0,0,-5).times(Mat4.rotation(-t,0,1,0));
-        // draw planet 1 with corresponding shape and material
-        this.shapes.planet_1.draw(context, program_state, this.planet_1true, this.materials.planet_1);
-
-        // Planet 2
-        // --------
-        // The rotation period is set to be 3/4 as fast as planet 1. The radius is 3 units farther
-        this.planet_2true = Mat4.rotation(t*3/4,0,1,0).times(Mat4.translation(0,0,8));
-        // Inverse matrix created for camera tracking.
-        this.planet_2 = Mat4.translation(0,0,-8).times(Mat4.rotation(-t*3/4,0,1,0));
-        // oscillator with period of 2s, therefore negative span of 1s and positive span of 1s.
-        // oscillator allows even seconds (0,2,4) to have phong, while seconds (1,3,5) have gouraud.
-        let m = Math.sin(t*Math.PI); 
-        if (m>0){
-            // draw planet 2 with phong
-            this.shapes.planet_2.draw(context, program_state, this.planet_2true, this.materials.planet_2p);
-        }
-        else{
-            // draw planet 2 with gouraud
-            this.shapes.planet_2.draw(context, program_state, this.planet_2true, this.materials.planet_2g);
-        }
-
-
-        // Planet 3
-        // --------
-        // The rotation period is set to be 1/2 as fast as planet 1. Radius is 3 units farther than p2. Additional "wobbling" angular velocity is added to x-axis.
-        this.planet_3true = Mat4.rotation(t*1/2,0,1,0).times(Mat4.translation(0,0,11)).times(Mat4.rotation(1*Math.sin(t*2),1,1,0));
-        // Inverse matrix created for camera tracking.
-        this.planet_3 = Mat4.rotation(-1*Math.sin(t*2),1,1,0).times(Mat4.translation(0,0,-11)).times(Mat4.rotation(-t*1/2,0,1,0));
-        // Planet 3 is drawn with corresponding material and shape
-        this.shapes.planet_3.draw(context, program_state, this.planet_3true, this.materials.planet_3);
-        // "flattened" torus2 is drawn for the rings, with a ring shader. scaling was done by trial and error to match example.
-        this.shapes.torus2.draw(context, program_state, this.planet_3true.times(Mat4.rotation(Math.PI/2,0,1,0)).times(Mat4.scale(3.2,3.2,0.1)), this.materials.ring);
-
-        // Planet 4
-        // --------
-        // Rotation period is 1/4 of planet 1. Radius is 3 units farther than p3.
-        this.planet_4true = Mat4.rotation(t*1/4,0,1,0).times(Mat4.translation(0,0,14));
-        // Inverse matrix created for camera tracking
-        this.planet_4 = Mat4.translation(0,0,-14).times(Mat4.rotation(-t*1/4,0,1,0));
-        // Planet 4 drawn with corresponding material and shape
-        this.shapes.planet_4.draw(context, program_state, this.planet_4true, this.materials.planet_4);
-        // Rotation period of moon around p4 is set to be 1. Additional rotation and translation tacked on to the end of planet 4 position matrix
-        this.moon_true = (Mat4.rotation(t*1/4,0,1,0)).times(Mat4.translation(0,0,14)).times(Mat4.rotation(t,0,1,0)).times(Mat4.translation(0,0,2.5));
-        // Inverse matrix created for camera tracking
-        this.moon = Mat4.translation(0,0,-2.5).times(Mat4.rotation(-t,0,1,0)).times(Mat4.translation(0,0,-14)).times(Mat4.rotation(-t*1/4,0,1,0));
-        // Moon is drawn with corresponding material and shape
-        this.shapes.moon.draw(context, program_state, this.moon_true, this.materials.moon);
-
-
-        // make sure that this.attached is not null, if it is then set the default camera loc.
-        if (this.attached == null){
-            program_state.set_camera(this.initial_camera_location)
-        }
-        else{
-                this.desired = this.attached();
-                
-                // make sure the desired loc is not null, if it is then set the default camera loc.
-                if (this.desired == null)
-                {
-                    // mapping added to ensure smoothness in transformation
-                    program_state.set_camera(this.initial_camera_location.map((x,i) => Vector.from(program_state.camera_inverse[i]).mix(x, 0.1)))
-                }
-                else {
-                    // rotate 90 degrees to match example, and offset 5 units away from planet.
-                    this.desired = Mat4.translation(0,0,-5).times(Mat4.rotation(Math.PI/2,0,1,0)).times(this.desired);
-                    program_state.set_camera(this.desired.map((x,i) => Vector.from(program_state.camera_inverse[i]).mix(x, 0.1)))
-                    // original code before mapping given below:
-                    //program_state.set_camera(this.desired)
-                }
-        }
-        */
+        
 
     }
 }
