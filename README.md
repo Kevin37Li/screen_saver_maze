@@ -2,9 +2,7 @@
 Run host.bat and go to localhost:8000
 
 
-/////////////////
-//// Buttons ////
-/////////////////
+Game Buttons:
 "i" to move forward 
 "j" to turn left
 "l" to turn right
