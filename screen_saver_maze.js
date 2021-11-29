@@ -19,6 +19,8 @@ export class ScreenSaverMaze extends Scene {
             cube: new defs.Cube(),
             axes: new defs.Axis_Arrows(),
             ball: new defs.Subdivision_Sphere(4),       
+            sphere: new defs.Subdivision_Sphere(4),
+                   
         };
         //needed for axis arrows
         const bump = new defs.Fake_Bump_Map();
@@ -34,7 +36,7 @@ export class ScreenSaverMaze extends Scene {
                 diffusivity: 0.6,
                 color: hex_color("#ffffff")
             }),
-        yellowfloor: new Material(new Textured_Phong(), {
+            yellowfloor: new Material(new Textured_Phong(), {
                 color: hex_color("#000000"), //opaque black
                 ambient: 1, diffusivity: 0.1, specularity: 0.1,
                 texture2: new Texture("assets/earth.gif", "NEAREST") // "NEAREST" 
@@ -54,6 +56,52 @@ export class ScreenSaverMaze extends Scene {
         this.birds_eye_location = Mat4.look_at(vec3(0,10*this.scalefactor,0),vec3(0,0,0),vec3(0,0,-1))//.times(Mat4.translation(-12*this.scalefactor,-12*this.scalefactor,-4.5*this.scalefactor));
         this.isW95 = false;
         
+        //Omar: alternate birds eye location 
+        this.bird_transform = Mat4.identity().times(Mat4.translation(24, 33, 10));
+        this.bird_transform = this.bird_transform.times(Mat4.rotation(-1.57, 1, 0, 0));
+        this.bird = this.bird_transform;
+
+        //movement flags 
+        this.look_right = false; 
+        this.look_left = false; 
+        this.move_forward = false;
+        this.look_backward = false; 
+
+        //1 is facing forward (towards top of maze)
+        //2 is facing right 
+        //3 is facing backward (towards bottom of maze)
+        //4 is facing left 
+        this.facing = 1; 
+
+        //this is the player (key will always be 1)
+        this.me_transform = Mat4.identity().times(Mat4.translation(1, 0.5, 17));
+        this.me_transform = this.me_transform.times(Mat4.scale(.5, .5, .5));
+        this.me = this.me_transform;
+
+        //dictionary of every object in our world 
+        //keep a key for every object, and the space it occupies in our world 
+        //all colliders will be squares/rectangles (AABB)
+        //list = [minX, maxX, minY, maxY, minZ, maxZ]
+        //starting sphere is at coordinate (1, 0.5, 17) with radius 0.5 so it's list is [0.5, 1.5, 0, 1, 16.5, 17.5]
+        this.colliders = {1: [0.5, 1.5, 0, 1, 16.5, 17.5], 
+          /*ltrb boundaries*/2: [-1.1, -1, 0, 5, -17, 15], 3: [0, 95, 0, 5, -17, -17.1], 4: [95, 95.1, 0, 5, -17, 15], 5: [0, 95, 0, 5, 19, 19.1],
+          /*U boundaries*/6: [3, 3.1, 0, 5, -13, 15], 7: [7.3, 7.4, 0, 5, -13, 11], 8: [15, 15.1, 0, 5, -13, 11], 9: [19, 19.1, 0, 5, -13, 15], 10: [7.3, 15, 0, 5, 11, 11.1], 11: [3, 19, 0, 5, 15, 15.1], 
+          /*U misc booundaries*/12: [11, 11.1, 0, 5, -17, -5], 13: [11, 11.1, 0, 5, 3, 7], 14: [11, 11.1, 0, 5, 15, 19], 15: [7.3, 11.1, 0, 5, -5, -4.9], 16: [7.3, 11.1, 0, 5, 7, 7.1], 17: [11.1, 15, 0, 5, -1, -1.1],
+          /*U connect with C*/18: [22.6, 22.7, 0, 5, -17, -5], 19: [22.6, 22.7, 0, 5, -1, 19], 20: [22.6, 26.7, 0, 5, -5.1, -5],
+          /*C boundaries*/21: [26.6, 26.6, 0, 5, -13, 15], 22: [26.4, 42.6, 0, 5, -13, -13.1], 23: [26.6, 42.6, 0, 5, 15, 15.4], 24: [30.6, 30.6, 0, 5, -9, 11], 25: [30.6, 42.6, 0, 5, -9.1, -9], 26: [30.6, 42.6, 0, 5, 11, 11.1],
+          /*C misc boundaries*/ 27: [35.4, 35.4, 0, 5, -5, -1], 28: [35.6, 38.6, 0, 5, -5.1, -5], 29: [35.4, 42.6, 0, 5, -1, -1.1], 30: [42.4, 42.6, 0, 5, -9, -1], 31: [35.4, 35.4, 0, 5, 3, 7], 32: [35.4, 46.5, 0, 5, 3, 3.4], 33: [35.4, 46.5, 0, 5, 7.1, 7.1], 34: [42.6, 46.6, 0, 5, -5.1, -5.1], 
+          /*C connect with L*/35: [46.6, 46.7, 0, 5, -13, 3], 36: [46.6, 46.7, 0, 5, 7, 19], 37: [46.6, 50.6, 0, 5, -13, -13.1],
+          /*L boundaries*/38: [50.6, 50.6, 0, 5, -13, 15], 39: [55.1, 55.1, 0, 5, -13, 11], 40: [55.1, 67, 0, 5, 11, 11.4], 41: [50.6, 67, 0, 5, 15, 15.4],
+          /*L misc boundaries*/ 42: [55.1, 63, 0, 5, -13.1, -13], 43: [55.1, 59, 0, 5, -9.1, -9], 44: [59, 63, 0, 5, -5.1, -5], 45: [59, 67, 0, 5, 3, 3.1], 46: [63, 71, 0, 5, -1.1, -1], 47: [63, 71, 0, 5, 7, 7.1], 48: [67, 71, 0, 5, -13.1, -13],
+                                49: [63, 63.1, 0, 5, -17, -5], 50: [67, 67.1, 0, 5, -17, -5], 51: [59, 59.1, 0, 5, -5, 7],
+          /*L connect A*/ 52: [71, 71.1, 0, 5, -13, -5], 53: [71, 71.1, 0, 5, -1, 3], 54: [71, 71.1, 0, 5, 7, 19], 
+          /*A boundaries*/ 55: [75, 75.1, 0, 5, -13, 15], 56: [79, 79.1, 0, 5, -9, -1], 57: [79, 79.1, 0, 5, 3, 15],
+                            58: [87, 87.1, 0, 5, -9, -1], 59: [87, 87.1, 0, 5, 3, 15], 60: [91, 91.1, 0, 5, -13, 15], 
+                            61: [75, 91, 0, 5, -13.1, -13], 62: [79, 87, 0, 5, -9.1, -9], 63: [79, 87, 0, 5, -1.1, -1], 64: [79, 87, 0, 5, 3, 3.1], 
+          /*A misc boundaries*/ 65: [71, 75, 0, 5, 3, 3.1], 66: [83, 83.1, 0, 5, 7, 19], 67: [83, 87, 0, 5, 15, 15.1], 68: [91, 95, 0, 5, 11, 11.1]
+
+          };
+
     }
 
     make_control_panel() {
@@ -62,20 +110,94 @@ export class ScreenSaverMaze extends Scene {
 
         this.key_triggered_button("Reset to Beginning", ["Control", "0"], () => this.attached = () => this.initial_camera_location.times(Mat4.translation(0,-2,-20)));
         this.new_line();
-        this.key_triggered_button("Birds Eye View", ["Control", "1"], () => this.attached = () => this.birds_eye_location);
-        /*
-        this.key_triggered_button("Attach to planet 2", ["Control", "2"], () => this.attached = () => this.planet_2);
-        this.new_line();
-        this.key_triggered_button("Attach to planet 3", ["Control", "3"], () => this.attached = () => this.planet_3);
-        this.key_triggered_button("Attach to planet 4", ["Control", "4"], () => this.attached = () => this.planet_4);
-        this.new_line();
-        this.key_triggered_button("Attach to moon", ["Control", "m"], () => this.attached = () => this.moon);
-        */
+        this.key_triggered_button("Birds Eye View", ["Control", "1"], () => this.attached = () => this.birds_eye_location); 
         this.key_triggered_button("Toggle Windows 95", ["v"], ()=>{
             // TODO:  Requirement 3d:  Set a flag here that will toggle your swaying motion on and off.
             this.isW95 ^= 1;
+        });
+        this.key_triggered_button("Help", ["Control", "h"], () => this.attached = () => this.bird);
+        this.key_triggered_button("Player POV", ["m"], () => this.attached = () => this.me);
+        this.new_line();
+        this.key_triggered_button("Turn Right", ["l"], () => {
+            this.look_right = !(this.look_right);
+        }); 
+        this.key_triggered_button("Turn Left", ["j"], () => {
+            this.look_left = !(this.look_left);
+        }); 
+        this.new_line(); 
+        this.key_triggered_button("Move Forward", ["i"], () => {
+            this.move_forward = !(this.move_forward);
+        });
+        this.key_triggered_button("Turn Around", ["k"], () => {
+            this.look_backward = !(this.look_backward);
+        });
+
+    }
+
+    //AABB is Axis Aligned Bounding Box
+    //AABB vs AABB collision: collision occurs when two bounding boxes overlap
+    //learn more here: https://developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection 
+    collision_occured(colliders) {
+        let player_pos = colliders[1];
+        let len = Object.keys(colliders).length;
+        let crash = false;
+
+        //go through the colliders, check if our player overlaps with any of them. 
+        for (let i = 2; i < len+1; i++) {
+            if (this.facing == 1) {
+                if ( (player_pos[0] <= colliders[i][1] && player_pos[1] >= colliders[i][0]) && 
+                        (player_pos[2] <= colliders[i][3] && player_pos[3] >= colliders[i][2]) && 
+                        ( (player_pos[4] - 1.0) <= colliders[i][5] && (player_pos[5] - 1.0) >= colliders[i][4]) ) {
+                            /*console.log("-----");
+                            console.log("crash 1");
+                            console.log(player_pos);
+                            console.log(colliders[i]);
+                            console.log("-----");*/
+                            crash = true; 
+                            break;
+                }
+            } else if (this.facing == 2) {
+                if ( ( (player_pos[0] + 1.0) <= colliders[i][1] && (player_pos[1] + 1.0) >= colliders[i][0]) && 
+                        (player_pos[2] <= colliders[i][3] && player_pos[3] >= colliders[i][2]) && 
+                        ( player_pos[4] <= colliders[i][5] && player_pos[5] >= colliders[i][4]) ) {
+                            /*console.log("-----");
+                            console.log("crash 2");
+                            console.log(player_pos);
+                            console.log(colliders[i]);
+                            console.log("-----");*/
+                            crash = true;
+                            break;
+                }
+
+            } else if (this.facing == 3) {
+                if (    ((player_pos[0] <= colliders[i][1]) && (player_pos[1] >= colliders[i][0])) && 
+                        ((player_pos[2] <= colliders[i][3]) && (player_pos[3] >= colliders[i][2])) && 
+                        (((player_pos[4] + 1.0) <= colliders[i][5]) && ((player_pos[5] + 1.0) >= colliders[i][4])) ) {
+                            /*console.log("-----");
+                            console.log("crash 3");
+                            console.log(player_pos);
+                            console.log(colliders[i]);
+                            console.log("-----");*/
+                            crash = true; 
+                            break;
+                }
+            
+            }else if (this.facing == 4) {
+                if ( ((player_pos[0] - 1.0) <= colliders[i][1] && (player_pos[1] - 1.0) >= colliders[i][0]) && 
+                        (player_pos[2] <= colliders[i][3] && player_pos[3] >= colliders[i][2]) && 
+                        (player_pos[4] <= colliders[i][5] && player_pos[5] >= colliders[i][4]) ) {
+                            /*console.log("-----");
+                            console.log("crash 4");
+                            console.log(player_pos);
+                            console.log(colliders[i]);
+                            console.log("-----");*/
+                            crash = true; 
+                            break;
+
+               }
+            }
         }
-        );
+        return crash;
     }
 
     draw_wall(context,program_state,model_transform,matl,inc,start_x,start_z,numtodraw){
@@ -141,6 +263,74 @@ export class ScreenSaverMaze extends Scene {
         // Draw axis at origin for reference/debugging
         this.shapes.axes.draw(context,program_state,model_transform,this.material);
 
+        // =============================
+        // ------ Control Movement -----
+        // =============================
+        var desired = 0;
+        var blending_factor = 0.1;
+        if(this.attached && this.attached() !== null) {
+            desired = Mat4.inverse(this.attached().times(Mat4.translation(0, 2, 1)));
+            program_state.camera_inverse = desired.map((x, i) => Vector.from(program_state.camera_inverse[i]).mix(x, blending_factor));
+            
+        }
+        
+        if (this.look_right) {
+            this.me_transform = this.me_transform.times(Mat4.rotation(-1.57, 0, 1, 0));
+            this.facing += 1; 
+            if (this.facing == 5){
+                this.facing = 1;
+            }
+            this.me = this.me_transform; 
+            this.look_right = false;
+        } else if (this.look_left) {
+            this.me_transform = this.me_transform.times(Mat4.rotation(1.57, 0, 1, 0));
+            this.facing -= 1; 
+            if (this.facing == 0) {
+                this.facing = 4;
+            }
+            this.me = this.me_transform;
+            this.look_left = false;
+        } else if (this.move_forward) {
+            
+            if (this.collision_occured(this.colliders)) {
+                //collision detected, so we don't move 
+            } else {
+                this.me_transform = this.me_transform.times(Mat4.translation(0, 0, -1.0));
+                if (this.facing == 1) {
+                   
+                    this.colliders[1][4] += -1.0; 
+                    this.colliders[1][5] += -1.0; 
+                } else if (this.facing == 2) {
+                    
+                    this.colliders[1][0] += 1.0; 
+                    this.colliders[1][1] += 1.0;
+                    
+                } else if (this.facing == 3) {
+                   
+                    this.colliders[1][4] += 1.0; 
+                    this.colliders[1][5] += 1.0;
+                } else if (this.facing == 4) {
+                    
+                    this.colliders[1][0] += -1.0; 
+                    this.colliders[1][1] += -1.0;
+                }
+            }
+            this.me = this.me_transform;
+            this.move_forward = false;
+        } else if (this.look_backward) {
+            //turn around 180 
+            this.me_transform = this.me_transform.times(Mat4.rotation(1.57, 0, 1, 0));
+            this.me_transform = this.me_transform.times(Mat4.rotation(1.57, 0, 1, 0));
+            if (this.facing == 1) {
+                this.facing = 3;
+            } else if (this.facing == 2) {
+                this.facing = 4; 
+            } else {
+                this.facing -= 2; 
+            }
+            this.me = this.me_transform;
+            this.look_backward = false;
+        }
 
         // =============================
         // --------- DRAW MAZE ---------
@@ -282,8 +472,9 @@ export class ScreenSaverMaze extends Scene {
         this.draw_wall(context,program_state,wall_xy,wallMatl,inc_x,21,8,1);
         this.draw_wall(context,program_state,wall_xy,wallMatl,inc_x,23,7,1);
 
-
-       
+        //Player Sphere
+        this.shapes.sphere.draw(context, program_state, this.me_transform, this.materials.plastic);
+        
 
         //this.draw_wall(context,program_state,floor,this.materials.plastic,inc_x,1,1,2);
 
