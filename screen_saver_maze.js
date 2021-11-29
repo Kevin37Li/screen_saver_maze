@@ -17,8 +17,8 @@ export class ScreenSaverMaze extends Scene {
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
             cube: new defs.Cube(),
-            axes: new defs.Axis_Arrows()
-                   
+            axes: new defs.Axis_Arrows(),
+            ball: new defs.Subdivision_Sphere(4),       
         };
         //needed for axis arrows
         const bump = new defs.Fake_Bump_Map();
@@ -39,12 +39,17 @@ export class ScreenSaverMaze extends Scene {
                 ambient: 1, diffusivity: 0.1, specularity: 0.1,
                 texture2: new Texture("assets/earth.gif", "NEAREST") // "NEAREST" 
             }),
+        ball: new Material(new defs.Phong_Shader(), {
+                ambient:1, 
+                diffusivity: 1, 
+                specularity: 1, 
+                color: hex_color("#ffffff")}),
         };
         
         //POV camera location
         this.initial_camera_location = Mat4.look_at(vec3(0, 0, 10), vec3(0, 0, 0), vec3(0, 1, 0));
         //Scale factor of maze
-        this.scalefactor = 10;
+        this.scalefactor = 1;
         //Birds eye view of maze
         this.birds_eye_location = Mat4.look_at(vec3(0,10*this.scalefactor,0),vec3(0,0,0),vec3(0,0,-1))//.times(Mat4.translation(-12*this.scalefactor,-12*this.scalefactor,-4.5*this.scalefactor));
         this.isW95 = false;
@@ -81,6 +86,23 @@ export class ScreenSaverMaze extends Scene {
             model_transform = inc.times(model_transform);
         }
 
+
+    }
+
+    draw_objects(context,program_state,model_transform,matl,start_x,start_z,num_to_draw) {
+
+        let gap = this.scalefactor/(num_to_draw+1)
+        let ball_scale_factor = gap/5;
+        model_transform = model_transform.times(Mat4.translation(0,gap,0))
+                                         .times(Mat4.scale(ball_scale_factor,ball_scale_factor,ball_scale_factor))
+                                         .times(Mat4.translation(start_x*(this.scalefactor/ball_scale_factor),0,start_z*(this.scalefactor/ball_scale_factor)))
+                                         ;
+
+
+        for (let object_num = 0; object_num < num_to_draw; object_num++) {
+            this.shapes.ball.draw(context,program_state,model_transform,matl);
+            model_transform = Mat4.translation(0,gap,0).times(model_transform);
+        }
 
     }
 
@@ -159,7 +181,7 @@ export class ScreenSaverMaze extends Scene {
 
         //draw boundary walls
         this.draw_wall(context,program_state,wall_yz,wallMatl,inc_z,0,0,8); //left wall
-        this.draw_wall(context,program_state,wall_yz,wallMatl,inc_z,24,0,8); //left wall
+        this.draw_wall(context,program_state,wall_yz,wallMatl,inc_z,24,0,8); //right wall
         this.draw_wall(context,program_state,wall_xy,wallMatl,inc_x,0,0,24); //top wall
         this.draw_wall(context,program_state,wall_xy,wallMatl,inc_x,0,9,24); //bottom wall
 
@@ -271,6 +293,14 @@ export class ScreenSaverMaze extends Scene {
         //this.shapes.cube.draw(context, program_state, floor, this.materials.plastic);
 
 
+        // =============================
+        // --------- DRAW OBJECT ---------
+        // =============================
+
+
+        let ball_group_1 = model_transform.times(Mat4.translation(half,squish,half));
+
+        this.draw_objects(context,program_state,ball_group_1,this.materials.ball,0,1,5);
         
 
     }
