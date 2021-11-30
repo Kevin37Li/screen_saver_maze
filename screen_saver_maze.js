@@ -38,7 +38,17 @@ export class ScreenSaverMaze extends Scene {
             yellowfloor: new Material(new Textured_Phong(), {
                 color: hex_color("#000000"), //opaque black
                 ambient: 1, diffusivity: 0.1, specularity: 0.1,
-                texture2: new Texture("assets/earth.gif", "NEAREST") // "NEAREST" 
+                texture: new Texture("assets/yellow.png", "NEAREST")
+            }),
+            greyceiling: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"), //opaque black
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/greybrick.jpg", "NEAREST")
+            }),
+            redbrick: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"), //opaque black
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/redbrick.png", "NEAREST")
             }),
         };
         
@@ -194,6 +204,10 @@ export class ScreenSaverMaze extends Scene {
         return crash;
     }
 
+    // super helpful function for constructing the maze walls in 1x1x0.005 "building blocks".
+    // specify the context, program_state, model_transform: the building block model_transform (e.g. x wall, z wall, floor, or ceiling),
+    // ... inc: the axis in which you wish to increment (x or z), the x coordinate you wish to start, and the z coordinate you wish to start,
+    // ... and finally the number of items you wish to draw.
     draw_wall(context,program_state,model_transform,matl,inc,start_x,start_z,numtodraw){
         model_transform = Mat4.translation(start_x*this.scalefactor,0,start_z*this.scalefactor).times(model_transform);
 
@@ -334,11 +348,10 @@ export class ScreenSaverMaze extends Scene {
         // Switch to Windows95 theme (TODO: switch balls to Gouraud Shader)
         if (this.isW95){
             floorMatl = this.materials.yellowfloor;
-            /*for (let i = 0; i < 24; i++){
-                this.draw_wall(context,program_state,ceiling,floorMatl,inc_z,i,0,9);
-                }*/
-            
-
+            wallMatl = this.materials.redbrick;
+            for (let i = 0; i < 24; i++){
+                this.draw_wall(context,program_state,ceiling,this.materials.greyceiling,inc_z,i,0,9);
+                }
         }
 
         //draw floor
