@@ -411,7 +411,7 @@ export class ScreenSaverMaze extends Scene {
         var desired = 0;
         var blending_factor = 0.18;
         if(this.attached && this.attached() !== null) {
-            desired = Mat4.inverse(this.attached().times(Mat4.translation(0, 2, 1)));
+            desired = Mat4.inverse(this.attached().times(Mat4.translation(0, 2, -0.5)));
             program_state.camera_inverse = desired.map((x, i) => Vector.from(program_state.camera_inverse[i]).mix(x, blending_factor));
             
         }
