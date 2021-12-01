@@ -103,10 +103,10 @@ export class ScreenSaverMaze extends Scene {
                   diffusivity: 0, 
                   specularity: 0, 
                   color: hex_color("#ffffff")}),
-            texture_1: new Material(new Texture_Rotate(), {
+            texture_1: new Material(new Texture_Rotate_1(), {
                 color: hex_color("#000000"),
                 ambient: 1.0,
-                texture: new Texture("assets/stars.png", "NEAREST")
+                texture: new Texture("assets/att1.jpg", "NEAREST")
             }),
             texture_2: new Material(new Texture_Scroll_X(), {
                 color: hex_color("#000000"),
@@ -537,6 +537,10 @@ export class ScreenSaverMaze extends Scene {
         for (let i = 0; i < 24; i++){
             this.draw_wall(context,program_state,floor,floorMatl,inc_z,i,0,9);
         }
+
+        //draw starting and finishing wall:
+        this.draw_wall(context,program_state,wall_yz,this.materials.plastic,inc_z,0,8,1);
+        this.draw_wall(context,program_state,wall_yz,this.materials.plastic,inc_z,25,8,1);
 
         //draw boundary walls
         this.draw_wall(context,program_state,wall_yz,wallMatl,inc_z,0,0,8); //left wall
@@ -1017,6 +1021,50 @@ class Texture_Scroll_X extends Textured_Phong {
                                                                          // Compute an initial (ambient) color:
                 gl_FragColor = vec4( ( tex_color.xyz + shape_color.xyz ) * ambient, shape_color.w * tex_color.w ); 
                                                                          // Compute the final color with contributions from lights:
+                gl_FragColor.xyz += phong_model_lights( normalize( N ), vertex_worldspace );
+        } `;
+    }
+}
+
+class Texture_Rotate_1 extends Textured_Phong {
+    // TODO:  Modify the shader below (right now it's just the same fragment shader as Textured_Phong) for requirement #7.
+    fragment_glsl_code() {
+        return this.shared_glsl_code() + `
+            varying vec2 f_tex_coord;
+            uniform sampler2D texture;
+            uniform float animation_time;
+            void main(){
+                //approximate PI
+                float PI = 3.14159;
+                // reduce the time to avoid decimal rounding error
+                float period = 4.0; // period * angular freq = 2PI
+                float reduced_time = mod(animation_time,period);
+                // modify f_tex_coord accordingly
+                // when 2D rotation matrix multiplied out, following form:
+                // vec2(xcos-ysin, xsin+ycos) for resulting coordinate.
+                // Also, we must translate the point by -0.5 and 0.5 before and after the rotation.
+                // 15 RPM corresponds to PI/2 rad/s, our angular freq.
+                float x = f_tex_coord.x-0.5;
+                float y = f_tex_coord.y-0.5;
+                vec2 f_tex_coord = vec2((x*cos(-reduced_time*PI/2.0)-y*sin(-PI/2.0*reduced_time)+0.5),(x*sin(-PI/2.0*reduced_time)+y*cos(-PI/2.0*reduced_time)+0.5));
+                                
+                // Sample the texture image in the correct place:
+                vec4 tex_color = texture2D( texture, f_tex_coord );
+                if( tex_color.w < .01 ) discard;
+
+                // The Black square is plotted below, using the same logic as the 
+                if(f_tex_coord.x < 0.85 && f_tex_coord.x > 0.15 && f_tex_coord.y < 0.85 && f_tex_coord.y > 0.15){
+                    if(f_tex_coord.x < 0.75 && f_tex_coord.x > 0.25 && f_tex_coord.y < 0.75 && f_tex_coord.y > 0.25){
+                        gl_FragColor = vec4( ( tex_color.xyz + shape_color.xyz ) * ambient, shape_color.w * tex_color.w ); 
+                    }
+                    else{
+                        gl_FragColor = vec4((shape_color.xyz) * ambient, shape_color.w);
+                    }
+                }
+                else{                                                        
+                    gl_FragColor = vec4( ( tex_color.xyz + shape_color.xyz ) * ambient, shape_color.w * tex_color.w ); 
+                }
+                // Compute the final color with contributions from lights:
                 gl_FragColor.xyz += phong_model_lights( normalize( N ), vertex_worldspace );
         } `;
     }

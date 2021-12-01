@@ -871,6 +871,7 @@ const Movement_Controls = defs.Movement_Controls =
         make_control_panel() {
             // make_control_panel(): Sets up a panel of interactive HTML elements, including
             // buttons with key bindings for affecting this scene, and live info readouts.
+            /*
             this.control_panel.innerHTML += "Click and drag the scene to spin your viewpoint around it.<br>";
             this.live_string(box => box.textContent = "- Position: " + this.pos[0].toFixed(2) + ", " + this.pos[1].toFixed(2)
                 + ", " + this.pos[2].toFixed(2));
@@ -933,7 +934,7 @@ const Movement_Controls = defs.Movement_Controls =
                 () => {
                     this.will_take_over_graphics_state = true
                 }, "#8B8885");
-            this.new_line();
+            this.new_line(); */
         }
 
         first_person_flyaround(radians_per_frame, meters_per_frame, leeway = 70) {
