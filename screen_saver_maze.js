@@ -141,17 +141,23 @@ export class ScreenSaverMaze extends Scene {
         this.look_right = false; 
         this.look_left = false; 
         this.move_forward = false;
+        this.move_backward = false;
         this.look_backward = false; 
+
+        //help mode flag (tells whether we want to draw the player sphere or not)
+        this.help_mode = true;
 
         //1 is facing forward (towards top of maze)
         //2 is facing right 
         //3 is facing backward (towards bottom of maze)
         //4 is facing left 
-        this.facing = 1; 
+        this.facing = 4; 
 
         //this is the player (key will always be 1)
         this.me_transform = Mat4.identity().times(Mat4.translation(1, 0.5, 17));
         this.me_transform = this.me_transform.times(Mat4.scale(.5, .5, .5));
+        this.me_transform = this.me_transform.times(Mat4.translation(6, 0, 0));
+        this.me_transform = this.me_transform.times(Mat4.rotation(1.57, 0, 1, 0));
         this.me = this.me_transform;
 
         //dictionary of every object in our world 
@@ -159,8 +165,8 @@ export class ScreenSaverMaze extends Scene {
         //all colliders will be squares/rectangles (AABB)
         //list = [minX, maxX, minY, maxY, minZ, maxZ]
         //starting sphere is at coordinate (1, 0.5, 17) with radius 0.5 so it's list is [0.5, 1.5, 0, 1, 16.5, 17.5]
-        this.colliders = {1: [0.5, 1.5, 0, 1, 16.5, 17.5], 
-          /*ltrb boundaries*/2: [-1.1, -1, 0, 5, -17, 15], 3: [0, 95, 0, 5, -17, -17.1], 4: [95, 95.1, 0, 5, -17, 15], 5: [0, 95, 0, 5, 19, 19.1],
+        this.colliders = {1: [6.5, 7.5, 0, 1, 16.5, 17.5], 
+          /*ltrb boundaries*/2: [-1.1, -1, 0, 5, -17, 19], 3: [0, 95, 0, 5, -17, -17.1], 4: [95, 95.1, 0, 5, -17, 15], 5: [0, 95, 0, 5, 19, 19.1],
           /*U boundaries*/6: [3, 3.1, 0, 5, -13, 15], 7: [7.3, 7.4, 0, 5, -13, 11], 8: [15, 15.1, 0, 5, -13, 11], 9: [19, 19.1, 0, 5, -13, 15], 10: [7.3, 15, 0, 5, 11, 11.1], 11: [3, 19, 0, 5, 15, 15.1], 
           /*U misc booundaries*/12: [11, 11.1, 0, 5, -17, -5], 13: [11, 11.1, 0, 5, 3, 7], 14: [11, 11.1, 0, 5, 15, 19], 15: [7.3, 11.1, 0, 5, -5, -4.9], 16: [7.3, 11.1, 0, 5, 7, 7.1], 17: [11.1, 15, 0, 5, -1, -1.1],
           /*U connect with C*/18: [22.6, 22.7, 0, 5, -17, -5], 19: [22.6, 22.7, 0, 5, -1, 19], 20: [22.6, 26.7, 0, 5, -5.1, -5],
@@ -175,7 +181,7 @@ export class ScreenSaverMaze extends Scene {
                             58: [87, 87.1, 0, 5, -9, -1], 59: [87, 87.1, 0, 5, 3, 15], 60: [91, 91.1, 0, 5, -13, 15], 
                             61: [75, 91, 0, 5, -13.1, -13], 62: [79, 87, 0, 5, -9.1, -9], 63: [79, 87, 0, 5, -1.1, -1], 64: [79, 87, 0, 5, 3, 3.1], 
           /*A misc boundaries*/ 65: [71, 75, 0, 5, 3, 3.1], 66: [83, 83.1, 0, 5, 7, 19], 67: [83, 87, 0, 5, 15, 15.1], 68: [91, 95, 0, 5, 11, 11.1],
-
+          /*Right end wall*/ 69: [99, 99.1, 0, 5, 15, 19]
           };
 
           this.colors = [];
@@ -250,8 +256,14 @@ export class ScreenSaverMaze extends Scene {
         this.key_triggered_button("Previous slide",["q"], () => {this.slidenum = this.prevslide(this.slidearray,this.slidenum)});
         this.key_triggered_button("Next slide",["e"], () => {this.slidenum = this.nextslide(this.slidearray,this.slidenum)});
 
-        this.key_triggered_button("Help", ["h"], () => this.attached = () => this.bird);
-        this.key_triggered_button("Player POV", ["m"], () => this.attached = () => this.me);
+        this.key_triggered_button("Help", ["h"], () => {
+            this.attached = () => this.bird;
+            this.help_mode = true; 
+            });
+        this.key_triggered_button("Player POV", ["m"], () => {
+            this.attached = () => this.me;
+            this.help_mode = false;
+        });
         this.new_line();
         this.key_triggered_button("Turn Right", ["l"], () => {
             this.look_right = !(this.look_right);
@@ -263,9 +275,23 @@ export class ScreenSaverMaze extends Scene {
         this.key_triggered_button("Move Forward", ["i"], () => {
             this.move_forward = !(this.move_forward);
         });
-        this.key_triggered_button("Turn Around", ["k"], () => {
+        this.key_triggered_button("Turn Around", ["Control", "k"], () => {
             this.look_backward = !(this.look_backward);
         });
+        this.new_line();
+        this.key_triggered_button("Move Backward", ["k"], () => {
+            this.move_backward = !(this.move_backward);
+        });
+        this.key_triggered_button("Restart", ["r"], () => {
+            this.me_transform = Mat4.identity().times(Mat4.translation(1, 0.5, 17));            
+            this.me_transform = this.me_transform.times(Mat4.scale(.5, .5, .5));
+            this.me_transform = this.me_transform.times(Mat4.translation(6, 0, 0));
+            this.facing = 4;
+            this.me_transform = this.me_transform.times(Mat4.rotation(1.57, 0, 1, 0));
+            this.me = this.me_transform; 
+            this.colliders[1] = [6.5, 7.5, 0, 1, 16.5, 17.5];
+        });
+
 
     }
 
@@ -446,11 +472,12 @@ export class ScreenSaverMaze extends Scene {
         var desired = 0;
         var blending_factor = 0.18;
         if(this.attached && this.attached() !== null) {
-            desired = Mat4.inverse(this.attached().times(Mat4.translation(0, 2, -0.5)));
+            desired = Mat4.inverse(this.attached().times(Mat4.translation(0, 0.5, -0.5)));
             program_state.camera_inverse = desired.map((x, i) => Vector.from(program_state.camera_inverse[i]).mix(x, blending_factor));
             
         }
         
+        var temp_facing = 0;
         if (this.look_right) {
             this.me_transform = this.me_transform.times(Mat4.rotation(-1.57, 0, 1, 0));
             this.facing += 1; 
@@ -507,6 +534,43 @@ export class ScreenSaverMaze extends Scene {
             }
             this.me = this.me_transform;
             this.look_backward = false;
+        } else if (this.move_backward) {
+            temp_facing = this.facing; 
+            if (this.facing == 1) {
+                this.facing = 3;
+            } else if (this.facing == 2) {
+                this.facing = 4; 
+            } else {
+                this.facing -= 2; 
+            }
+            if (this.collision_occured(this.colliders)) {
+                //collision detected, so we don't move 
+            } else {
+                this.facing = temp_facing; 
+                this.me_transform = this.me_transform.times(Mat4.translation(0, 0, 1.0));
+                if (this.facing == 1) {
+                   
+                    this.colliders[1][4] += 1.0; 
+                    this.colliders[1][5] += 1.0; 
+                } else if (this.facing == 2) {
+                    
+                    this.colliders[1][0] += -1.0; 
+                    this.colliders[1][1] += -1.0;
+                    
+                } else if (this.facing == 3) {
+                   
+                    this.colliders[1][4] += -1.0; 
+                    this.colliders[1][5] += -1.0;
+                } else if (this.facing == 4) {
+                    
+                    this.colliders[1][0] += 1.0; 
+                    this.colliders[1][1] += 1.0;
+                }
+            }
+
+            this.facing = temp_facing;
+            this.me = this.me_transform;
+            this.move_backward = false;
         }
 
         // =============================
@@ -701,8 +765,9 @@ export class ScreenSaverMaze extends Scene {
         
 
         //Player Sphere
-        this.shapes.sphere.draw(context, program_state, this.me_transform, this.materials.plastic);
-        
+        if (this.help_mode) {
+            this.shapes.sphere.draw(context, program_state, this.me_transform, this.materials.plastic);
+        }
 
         //this.draw_wall(context,program_state,floor,this.materials.plastic,inc_x,1,1,2);
 
@@ -725,10 +790,10 @@ export class ScreenSaverMaze extends Scene {
         if(Math.floor(t % present_time) != 0) {
             this.set_opacity(1-Math.floor(t % present_time)/present_time);
             this.draw_balls(context,program_state,object_group_1,ballMatl,1,4,5,this.isW95);
-            this.colliders[69] = [3, 7, 0, 5, 0, 2];
+            this.colliders[70] = [3, 7, 0, 5, 0, 2];
         } else {
             this.set_colors(5);
-            delete this.colliders[69];
+            delete this.colliders[70];
         }       
 
         let object_group_2 = model_transform.times(Mat4.translation(half,squish,half));
@@ -736,9 +801,9 @@ export class ScreenSaverMaze extends Scene {
         if(Math.floor(t % present_time) != 0) {
             
             this.draw_cubes(context,program_state,object_group_2,this.materials.texture_1,2,7,3);
-            this.colliders[70] = [8.3, 10.1, 0, 5, 12, 14];
+            this.colliders[71] = [8.3, 10.1, 0, 5, 12, 14];
         } else {
-            delete this.colliders[70];
+            delete this.colliders[71];
         }       
 
         // objects within the C shape
@@ -747,10 +812,10 @@ export class ScreenSaverMaze extends Scene {
         if(Math.floor(t % present_time) != 0) {
             this.set_opacity(1-Math.floor(t % present_time)/present_time);
             this.draw_balls(context,program_state,object_group_3,ballMatl,7,5,5,this.isW95);
-            this.colliders[71] = [26.6, 30, 0, 5, 4, 6];
+            this.colliders[72] = [26.6, 30, 0, 5, 4, 6];
         } else {
             this.set_colors(5);
-            delete this.colliders[71];
+            delete this.colliders[72];
         }       
 
         let object_group_4 = model_transform.times(Mat4.translation(half,squish,half));
@@ -758,9 +823,9 @@ export class ScreenSaverMaze extends Scene {
         if(Math.floor(t % present_time) != 0) {
             
             this.draw_cubes(context,program_state,object_group_4,this.materials.texture_1,9,7,3);
-            this.colliders[72] = [35, 38, 0, 5, 11, 15];
+            this.colliders[73] = [35, 38, 0, 5, 11, 15];
         } else {
-            delete this.colliders[72];
+            delete this.colliders[73];
         }       
 
         // objects within the L shape
@@ -769,10 +834,10 @@ export class ScreenSaverMaze extends Scene {
         if(Math.floor(t % present_time) != 0) {
             this.set_opacity(1-Math.floor(t % present_time)/present_time);
             this.draw_balls(context,program_state,object_group_5,ballMatl,13,4,5,this.isW95);
-            this.colliders[73] = [50, 53, 0, 5, 0, 2];
+            this.colliders[74] = [50, 53, 0, 5, 0, 2];
         } else {
             this.set_colors(5);
-            delete this.colliders[73];
+            delete this.colliders[74];
         }    
 
         // objects within the A shape
@@ -781,10 +846,10 @@ export class ScreenSaverMaze extends Scene {
         if(Math.floor(t % present_time) != 0) {
             this.set_opacity(1-Math.floor(t % present_time)/present_time);
             this.draw_balls(context,program_state,object_group_6,ballMatl,19,3,5,this.isW95);
-            this.colliders[74] = [77, 79, 0, 5, -4, -2];
+            this.colliders[75] = [75, 79, 0, 5, -4, -2];
         } else {
             this.set_colors(5);
-            delete this.colliders[74];
+            delete this.colliders[75];
         }
 
 
@@ -793,9 +858,9 @@ export class ScreenSaverMaze extends Scene {
         if(Math.floor(t % present_time) != 0) {
             
             this.draw_cubes(context,program_state,object_group_7,this.materials.texture_1,21,4,3);
-            this.colliders[75] = [84, 86, 0, 5, -1, 3];
+            this.colliders[76] = [84, 86, 0, 5, -1, 3];
         } else {
-            delete this.colliders[75];
+            delete this.colliders[76];
         } 
     }
 }
