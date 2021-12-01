@@ -19,6 +19,7 @@ export class ScreenSaverMaze extends Scene {
             cube: new defs.Cube(),
             axes: new defs.Axis_Arrows(),
             ball: new defs.Subdivision_Sphere(4),       
+            flat_ball: new (defs.Subdivision_Sphere.prototype.make_flat_shaded_version())(2),
             sphere: new defs.Subdivision_Sphere(4),
             box: new Cube(),
                    
@@ -97,6 +98,11 @@ export class ScreenSaverMaze extends Scene {
                     diffusivity: 1, 
                     specularity: 1, 
                     color: hex_color("#ffffff")}),
+            flat_ball: new Material(new defs.Phong_Shader(),
+                 {ambient:1,
+                  diffusivity: 0, 
+                  specularity: 0, 
+                  color: hex_color("#ffffff")}),
             texture_1: new Material(new Texture_Rotate(), {
                 color: hex_color("#000000"),
                 ambient: 1.0,
@@ -323,7 +329,7 @@ export class ScreenSaverMaze extends Scene {
         }
     }
 
-    draw_balls(context,program_state,model_transform,matl,start_x,start_z,num_to_draw) {
+    draw_balls(context,program_state,model_transform,matl,start_x,start_z,num_to_draw,isW95) {
 
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
         let gap = this.scalefactor/(num_to_draw+1)
@@ -333,7 +339,11 @@ export class ScreenSaverMaze extends Scene {
                                          .times(Mat4.translation(start_x*(this.scalefactor/ball_scale_factor),0,start_z*(this.scalefactor/ball_scale_factor)));
 
         for (let object_num = 0; object_num < num_to_draw; object_num++) {
-            this.shapes.ball.draw(context,program_state,model_transform.times(Mat4.translation(0.45*this.scalefactor/ball_scale_factor*Math.sin(t*(object_num+1)), 0, 0)), matl.override({color:this.colors[object_num]}));
+            if(isW95) {
+                this.shapes.flat_ball.draw(context,program_state,model_transform.times(Mat4.translation(0.45*this.scalefactor/ball_scale_factor*Math.sin(t*(object_num+1)), 0, 0)), matl.override({color:this.colors[object_num]}));
+            } else {
+                this.shapes.ball.draw(context,program_state,model_transform.times(Mat4.translation(0.45*this.scalefactor/ball_scale_factor*Math.sin(t*(object_num+1)), 0, 0)), matl.override({color:this.colors[object_num]}));
+            }
             model_transform = Mat4.translation(0,gap,0).times(model_transform);
         }
 
@@ -485,6 +495,7 @@ export class ScreenSaverMaze extends Scene {
         let wallMatl = this.materials.UCLAwall;
         let floorMatl = this.materials.UCLAfloor;
         let blueMatl = bluedef;
+        let ballMatl = this.materials.ball;
         
         // specify the translation matrix by which each wall/floor will iteratively "grow" when draw_wall is called.
         let inc_z = Mat4.translation(0,0,this.scalefactor);
@@ -516,6 +527,7 @@ export class ScreenSaverMaze extends Scene {
             floorMatl = this.materials.yellowfloor;
             blueMatl = floorMatl;
             wallMatl = this.materials.redbrick;
+            ballMatl = this.materials.flat_ball;
             for (let i = 0; i < 24; i++){
                 this.draw_wall(context,program_state,ceiling,this.materials.greyceiling,inc_z,i,0,9);
                 }
@@ -664,7 +676,7 @@ export class ScreenSaverMaze extends Scene {
 
         if(Math.floor(t % present_time) != 0) {
             this.set_opacity(1-Math.floor(t % present_time)/present_time);
-            this.draw_balls(context,program_state,object_group_1,this.materials.ball,1,4,5);
+            this.draw_balls(context,program_state,object_group_1,ballMatl,1,4,5,this.isW95);
             this.colliders[69] = [3, 7, 0, 5, 0, 2];
         } else {
             this.set_colors(5);
@@ -686,7 +698,7 @@ export class ScreenSaverMaze extends Scene {
 
         if(Math.floor(t % present_time) != 0) {
             this.set_opacity(1-Math.floor(t % present_time)/present_time);
-            this.draw_balls(context,program_state,object_group_3,this.materials.ball,7,5,5);
+            this.draw_balls(context,program_state,object_group_3,ballMatl,7,5,5,this.isW95);
             this.colliders[71] = [26.6, 30, 0, 5, 4, 6];
         } else {
             this.set_colors(5);
@@ -708,7 +720,7 @@ export class ScreenSaverMaze extends Scene {
 
         if(Math.floor(t % present_time) != 0) {
             this.set_opacity(1-Math.floor(t % present_time)/present_time);
-            this.draw_balls(context,program_state,object_group_5,this.materials.ball,13,4,5);
+            this.draw_balls(context,program_state,object_group_5,ballMatl,13,4,5,this.isW95);
             this.colliders[73] = [50, 53, 0, 5, 0, 2];
         } else {
             this.set_colors(5);
@@ -720,7 +732,7 @@ export class ScreenSaverMaze extends Scene {
 
         if(Math.floor(t % present_time) != 0) {
             this.set_opacity(1-Math.floor(t % present_time)/present_time);
-            this.draw_balls(context,program_state,object_group_6,this.materials.ball,19,3,5);
+            this.draw_balls(context,program_state,object_group_6,ballMatl,19,3,5,this.isW95);
             this.colliders[74] = [77, 79, 0, 5, -4, -2];
         } else {
             this.set_colors(5);
