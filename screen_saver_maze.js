@@ -33,14 +33,64 @@ export class ScreenSaverMaze extends Scene {
         // *** Materials
         this.materials = {
             plastic: new Material(new defs.Phong_Shader(),{
-                ambient: 0.5,
-                diffusivity: 0.6,
+                ambient: 1,
+                diffusivity: 0,
                 color: hex_color("#ffffff")
             }),
             yellowfloor: new Material(new Textured_Phong(), {
                 color: hex_color("#000000"), //opaque black
                 ambient: 1, diffusivity: 0.1, specularity: 0.1,
-                texture2: new Texture("assets/earth.gif", "NEAREST") // "NEAREST" 
+                texture: new Texture("assets/yellow.png", "NEAREST")
+            }),
+            greyceiling: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"), //opaque black
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/greybrick.jpg", "NEAREST")
+            }),
+            redbrick: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"), //opaque black
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/redbrick.png", "NEAREST")
+            }),
+            nightwall: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"), //opaque black
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/night1.jpg", "NEAREST")
+            }),
+            UCLAwall: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"), //opaque black
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/boelter.png", "NEAREST")
+            }),
+            UCLAfloor: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"), //opaque black
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/linoleum.png", "NEAREST")
+            }),
+            outsidewall: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"), //opaque black
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/UCLAp.jpg", "NEAREST")
+            }),
+            skycolor: new Material(new defs.Phong_Shader(),{
+                ambient: 1,
+                diffusivity: 1,
+                color: hex_color("#a3d1ff") // sky blue hex
+            }),
+            grassgreen: new Material(new defs.Phong_Shader(),{
+                ambient: 1,
+                diffusivity: 0,
+                color: hex_color("#7EC850") // grass green hex
+            }),
+            nightsky: new Material(new defs.Phong_Shader(),{
+                ambient: 1,
+                diffusivity: 0,
+                color: hex_color("#283163") // dark blue hex
+            }),
+            darkgrass: new Material(new defs.Phong_Shader(),{
+                ambient: 1,
+                diffusivity: 0,
+                color: hex_color("#013220") // dark green hex
             }),
             ball: new Material(new defs.Phong_Shader(), {
                     ambient:1, 
@@ -65,7 +115,11 @@ export class ScreenSaverMaze extends Scene {
         this.scalefactor = 2;
         //Birds eye view of maze
         this.birds_eye_location = Mat4.look_at(vec3(0,10*this.scalefactor,0),vec3(0,0,0),vec3(0,0,-1))//.times(Mat4.translation(-12*this.scalefactor,-12*this.scalefactor,-4.5*this.scalefactor));
+        //Toggles for display styles
         this.isW95 = false;
+        this.isNature = true;
+        this.isUCLA = false;
+        this.isNight = false;
         
         //Omar: alternate birds eye location 
         this.bird_transform = Mat4.identity().times(Mat4.translation(24, 33, 10));
@@ -119,15 +173,43 @@ export class ScreenSaverMaze extends Scene {
     make_control_panel() {
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
 
+        // OLD COMMANDS
+        // this.key_triggered_button("Reset to Beginning", ["Control", "0"], () => this.attached = () => this.initial_camera_location.times(Mat4.translation(0,-2,-20)));
+        // this.new_line();
+        // this.key_triggered_button("Birds Eye View", ["Control", "1"], () => this.attached = () => this.birds_eye_location);
 
-        this.key_triggered_button("Reset to Beginning", ["Control", "0"], () => this.attached = () => this.initial_camera_location.times(Mat4.translation(0,-2,-20)));
-        this.new_line();
-        this.key_triggered_button("Birds Eye View", ["Control", "1"], () => this.attached = () => this.birds_eye_location); 
-        this.key_triggered_button("Toggle Windows 95", ["v"], ()=>{
-            // TODO:  Requirement 3d:  Set a flag here that will toggle your swaying motion on and off.
-            this.isW95 ^= 1;
+        
+        // Change display states
+        this.key_triggered_button("Dislay: Walking to Class", ["Control","1"], ()=>{
+            // Turns on the (default) UCLA settings.
+            this.isW95 = false;
+            this.isNature = true;
+            this.isUCLA = false;
+            this.isNight = false;
         });
-        this.key_triggered_button("Help", ["Control", "h"], () => this.attached = () => this.bird);
+        this.key_triggered_button("Dislay: Navigate Boelter Hall", ["Control","2"], ()=>{
+            // Turns on Boelter Hall settings.
+            this.isW95 = false;
+            this.isNature = false;
+            this.isUCLA = true;
+            this.isNight = false;
+        });
+        this.key_triggered_button("Dislay: Enjoy the Griffith Observatory", ["Control","3"], ()=>{
+            // Turns on Griffith at night settings.
+            this.isW95 = false;
+            this.isNature = false;
+            this.isUCLA = false;
+            this.isNight = true;
+        });
+        this.key_triggered_button("Dislay: Classic Windows 95", ["Control","4"], ()=>{
+            // Turns on the windows 95 settings.
+            this.isW95 = true;
+            this.isNature = false;
+            this.isUCLA = false;
+            this.isNight = false;
+        });
+
+        this.key_triggered_button("Help", ["h"], () => this.attached = () => this.bird);
         this.key_triggered_button("Player POV", ["m"], () => this.attached = () => this.me);
         this.new_line();
         this.key_triggered_button("Turn Right", ["l"], () => {
@@ -212,25 +294,10 @@ export class ScreenSaverMaze extends Scene {
         return crash;
     }
 
-    object_collision(colliders) {
-        let crash = false;
-
-        for (let i = 2; i < len+1; i++) {
-            if ( (player_pos[0] <= colliders[i][1] && player_pos[1] >= colliders[i][0]) && 
-                    (player_pos[2] <= colliders[i][3] && player_pos[3] >= colliders[i][2]) && 
-                    ( (player_pos[4] - 1.0) <= colliders[i][5] && (player_pos[5] - 1.0) >= colliders[i][4]) ) {
-                        /*console.log("-----");
-                        console.log("crash 1");
-                        console.log(player_pos);
-                        console.log(colliders[i]);
-                        console.log("-----");*/
-                        crash = true; 
-                        break;
-            }
-        }
-        return crash;
-    }
-
+    // super helpful function for constructing the maze walls in 1x1x0.005 "building blocks".
+    // specify the context, program_state, model_transform: the building block model_transform (e.g. x wall, z wall, floor, or ceiling),
+    // ... inc: the axis in which you wish to increment (x or z), the x coordinate you wish to start, and the z coordinate you wish to start,
+    // ... and finally the number of items you wish to draw.
     draw_wall(context,program_state,model_transform,matl,inc,start_x,start_z,numtodraw){
         model_transform = Mat4.translation(start_x*this.scalefactor,0,start_z*this.scalefactor).times(model_transform);
 
@@ -308,10 +375,15 @@ export class ScreenSaverMaze extends Scene {
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
         // LIGHTING
-        const light_position = vec4(-10, 100, -10, 1);
+        const light_position = vec4(-10, 201, -10, 1);
         // The parameters of the Light are: position, color, size
-        // color is set to white (1,1,1,1), with size factor corresponding to 10 to the n-power.
-        program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10000)];
+        if (!this.isNight){
+            program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 50000)];
+        }
+        else {
+            program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 500)];
+        }
+
         
         // colors
         const yellow = hex_color("#fac91a");
@@ -321,13 +393,13 @@ export class ScreenSaverMaze extends Scene {
         let model_transform = Mat4.identity();
 
         // Draw axis at origin for reference/debugging
-        this.shapes.axes.draw(context,program_state,model_transform,this.material);
+        // this.shapes.axes.draw(context,program_state,model_transform,this.material);
 
         // =============================
         // ------ Control Movement -----
         // =============================
         var desired = 0;
-        var blending_factor = 0.1;
+        var blending_factor = 0.18;
         if(this.attached && this.attached() !== null) {
             desired = Mat4.inverse(this.attached().times(Mat4.translation(0, 2, 1)));
             program_state.camera_inverse = desired.map((x, i) => Vector.from(program_state.camera_inverse[i]).mix(x, blending_factor));
@@ -404,24 +476,49 @@ export class ScreenSaverMaze extends Scene {
         let floor = model_transform.times(Mat4.translation(half,0,half)).times(Mat4.scale(half,squish,half));
         let bluefloor = model_transform.times(Mat4.translation(half,squish,half)).times(Mat4.scale(half,squish,half));
         let ceiling = model_transform.times(Mat4.translation(half,this.scalefactor,half)).times(Mat4.scale(half,squish,half));
+
+        // specify default plastic materials
+        let yellowdef = this.materials.plastic.override({color:yellow});
+        let bluedef = this.materials.plastic.override({color:blue});
         
-        // specify each type of material
-        let wallMatl = this.materials.plastic;
-        let floorMatl = this.materials.plastic.override({color:yellow});
-        let blueMatl = this.materials.plastic.override({color:blue});
+        // specify material placeholder variables
+        let wallMatl = this.materials.UCLAwall;
+        let floorMatl = this.materials.UCLAfloor;
+        let blueMatl = bluedef;
         
         // specify the translation matrix by which each wall/floor will iteratively "grow" when draw_wall is called.
         let inc_z = Mat4.translation(0,0,this.scalefactor);
         let inc_x = Mat4.translation(this.scalefactor,0,0);
         
+        // Switch to UCLA indoor theme
+        if (this.isUCLA){
+            wallMatl = this.materials.UCLAwall;
+            floorMatl = this.materials.UCLAfloor;
+            blueMatl = bluedef;
+            for (let i = 0; i < 24; i++){
+                this.draw_wall(context,program_state,ceiling,this.materials.UCLAfloor,inc_z,i,0,9);
+                }
+        }
+        // Switch to main UCLA theme
+        if (this.isNature){
+            wallMatl = this.materials.outsidewall;
+            floorMatl = yellowdef;
+            blueMatl = bluedef;
+        }
+        // Switch to night theme
+        if (this.isNight){
+            wallMatl = this.materials.nightwall;
+            floorMatl = yellowdef.override({ambient:0.6});
+            blueMatl = bluedef.override({ambient:0.6});
+        }
         // Switch to Windows95 theme (TODO: switch balls to Gouraud Shader)
         if (this.isW95){
             floorMatl = this.materials.yellowfloor;
-            /*for (let i = 0; i < 24; i++){
-                this.draw_wall(context,program_state,ceiling,floorMatl,inc_z,i,0,9);
-                }*/
-            
-
+            blueMatl = floorMatl;
+            wallMatl = this.materials.redbrick;
+            for (let i = 0; i < 24; i++){
+                this.draw_wall(context,program_state,ceiling,this.materials.greyceiling,inc_z,i,0,9);
+                }
         }
 
         //draw floor
@@ -531,6 +628,17 @@ export class ScreenSaverMaze extends Scene {
         this.draw_wall(context,program_state,wall_xy,wallMatl,inc_x,18,5,1);
         this.draw_wall(context,program_state,wall_xy,wallMatl,inc_x,21,8,1);
         this.draw_wall(context,program_state,wall_xy,wallMatl,inc_x,23,7,1);
+
+        if (!this.isNight){
+            this.shapes.sphere.draw(context, program_state, Mat4.scale(200,200,200),this.materials.skycolor)
+            this.shapes.cube.draw(context,program_state,Mat4.translation(0,-1,0).times(Mat4.scale(200,1,200)),this.materials.grassgreen)
+        }
+        else {
+            this.shapes.sphere.draw(context, program_state, Mat4.scale(200,200,200),this.materials.nightsky)
+            this.shapes.cube.draw(context,program_state,Mat4.translation(0,-1,0).times(Mat4.scale(200,1,200)),this.materials.darkgrass)
+
+        }
+        
 
         //Player Sphere
         this.shapes.sphere.draw(context, program_state, this.me_transform, this.materials.plastic);
