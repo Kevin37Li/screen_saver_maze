@@ -246,7 +246,7 @@ export class ScreenSaverMaze extends Scene {
         });
         this.new_line();
         this.new_line();
-        this.key_triggered_button("Presenter mode", ["w"], () => {this.isPres ^= 1}); // enable presenter mode
+        this.key_triggered_button("Toggle Presenter mode", ["w"], () => {this.isPres ^= 1}); // enable presenter mode
         this.key_triggered_button("Previous slide",["q"], () => {this.slidenum = this.prevslide(this.slidearray,this.slidenum)});
         this.key_triggered_button("Next slide",["e"], () => {this.slidenum = this.nextslide(this.slidearray,this.slidenum)});
 
