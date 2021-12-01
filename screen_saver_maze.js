@@ -34,7 +34,7 @@ export class ScreenSaverMaze extends Scene {
         // *** Materials
         this.materials = {
             plastic: new Material(new defs.Phong_Shader(),{
-                ambient: 1,
+                ambient: 0.7,
                 diffusivity: 0,
                 color: hex_color("#ffffff")
             }),
@@ -126,6 +126,11 @@ export class ScreenSaverMaze extends Scene {
         this.isNature = true;
         this.isUCLA = false;
         this.isNight = false;
+
+        //Slide stuff
+        this.isPres = false;
+        this.slidearray = [this.materials.texture_1,this.materials.texture_2,this.materials.greyceiling]; // 8 slides
+        this.slidenum = 0;
         
         //Omar: alternate birds eye location 
         this.bird_transform = Mat4.identity().times(Mat4.translation(24, 33, 10));
@@ -176,6 +181,31 @@ export class ScreenSaverMaze extends Scene {
           this.colors = [];
     }
 
+    // go to next slide
+    nextslide(arr,curr){
+        let len = arr.length;
+        if (curr == len-1){
+            curr = 0;
+        }
+        else {
+            curr++;
+        }
+        return curr;
+    }
+
+    // go to previous slide
+    prevslide(arr,curr){
+        let len = arr.length;
+        if (curr == 0){
+            curr = len-1;
+        }
+        else {
+            curr--;
+        }
+        return curr;
+    }
+
+
     make_control_panel() {
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
 
@@ -186,34 +216,39 @@ export class ScreenSaverMaze extends Scene {
 
         
         // Change display states
-        this.key_triggered_button("Dislay: Walking to Class", ["Control","1"], ()=>{
+        this.key_triggered_button("Display: Walking to Class", ["1"], ()=>{
             // Turns on the (default) UCLA settings.
             this.isW95 = false;
             this.isNature = true;
             this.isUCLA = false;
             this.isNight = false;
         });
-        this.key_triggered_button("Dislay: Navigate Boelter Hall", ["Control","2"], ()=>{
+        this.key_triggered_button("Display: Navigate Boelter Hall", ["2"], ()=>{
             // Turns on Boelter Hall settings.
             this.isW95 = false;
             this.isNature = false;
             this.isUCLA = true;
             this.isNight = false;
         });
-        this.key_triggered_button("Dislay: Enjoy the Griffith Observatory", ["Control","3"], ()=>{
+        this.key_triggered_button("Display: Enjoy the Griffith Observatory", ["3"], ()=>{
             // Turns on Griffith at night settings.
             this.isW95 = false;
             this.isNature = false;
             this.isUCLA = false;
             this.isNight = true;
         });
-        this.key_triggered_button("Dislay: Classic Windows 95", ["Control","4"], ()=>{
+        this.key_triggered_button("Display: Classic Windows 95", ["4"], ()=>{
             // Turns on the windows 95 settings.
             this.isW95 = true;
             this.isNature = false;
             this.isUCLA = false;
             this.isNight = false;
         });
+        this.new_line();
+        this.new_line();
+        this.key_triggered_button("Presenter mode", ["w"], () => {this.isPres ^= 1}); // enable presenter mode
+        this.key_triggered_button("Previous slide",["q"], () => {this.slidenum = this.prevslide(this.slidearray,this.slidenum)});
+        this.key_triggered_button("Next slide",["e"], () => {this.slidenum = this.nextslide(this.slidearray,this.slidenum)});
 
         this.key_triggered_button("Help", ["h"], () => this.attached = () => this.bird);
         this.key_triggered_button("Player POV", ["m"], () => this.attached = () => this.me);
@@ -543,10 +578,19 @@ export class ScreenSaverMaze extends Scene {
         this.draw_wall(context,program_state,wall_yz,this.materials.plastic,inc_z,25,8,1);
 
         //draw boundary walls
-        this.draw_wall(context,program_state,wall_yz,wallMatl,inc_z,0,0,8); //left wall
-        this.draw_wall(context,program_state,wall_yz,wallMatl,inc_z,24,0,8); //right wall
-        this.draw_wall(context,program_state,wall_xy,wallMatl,inc_x,0,0,24); //top wall
-        this.draw_wall(context,program_state,wall_xy,wallMatl,inc_x,0,9,24); //bottom wall
+
+        if (!this.isPres){
+            this.draw_wall(context,program_state,wall_yz,wallMatl,inc_z,0,0,8); //left wall
+            this.draw_wall(context,program_state,wall_yz,wallMatl,inc_z,24,0,8); //right wall
+            this.draw_wall(context,program_state,wall_xy,wallMatl,inc_x,0,0,24); //top wall
+            this.draw_wall(context,program_state,wall_xy,wallMatl,inc_x,0,9,24); //bottom wall
+        }
+        else{
+            this.draw_wall(context,program_state,wall_yz,this.slidearray[this.slidenum],inc_z,0,0,8); //left wall
+            this.draw_wall(context,program_state,wall_yz,this.slidearray[this.slidenum],inc_z,24,0,8); //right wall
+            this.draw_wall(context,program_state,wall_xy,this.slidearray[this.slidenum],inc_x,0,0,24); //top wall
+            this.draw_wall(context,program_state,wall_xy,this.slidearray[this.slidenum],inc_x,0,9,24); //bottom wall
+        }
 
         //draw U floor
         this.draw_wall(context,program_state,bluefloor,blueMatl,inc_z,1,1,7);
@@ -1052,18 +1096,9 @@ class Texture_Rotate_1 extends Textured_Phong {
                 vec4 tex_color = texture2D( texture, f_tex_coord );
                 if( tex_color.w < .01 ) discard;
 
-                // The Black square is plotted below, using the same logic as the 
-                if(f_tex_coord.x < 0.85 && f_tex_coord.x > 0.15 && f_tex_coord.y < 0.85 && f_tex_coord.y > 0.15){
-                    if(f_tex_coord.x < 0.75 && f_tex_coord.x > 0.25 && f_tex_coord.y < 0.75 && f_tex_coord.y > 0.25){
-                        gl_FragColor = vec4( ( tex_color.xyz + shape_color.xyz ) * ambient, shape_color.w * tex_color.w ); 
-                    }
-                    else{
-                        gl_FragColor = vec4((shape_color.xyz) * ambient, shape_color.w);
-                    }
-                }
-                else{                                                        
-                    gl_FragColor = vec4( ( tex_color.xyz + shape_color.xyz ) * ambient, shape_color.w * tex_color.w ); 
-                }
+                                                                     
+                gl_FragColor = vec4( ( tex_color.xyz + shape_color.xyz ) * ambient, shape_color.w * tex_color.w ); 
+                
                 // Compute the final color with contributions from lights:
                 gl_FragColor.xyz += phong_model_lights( normalize( N ), vertex_worldspace );
         } `;
