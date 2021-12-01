@@ -20,6 +20,7 @@ export class ScreenSaverMaze extends Scene {
             axes: new defs.Axis_Arrows(),
             ball: new defs.Subdivision_Sphere(4),       
             sphere: new defs.Subdivision_Sphere(4),
+            box: new Cube(),
                    
         };
         //needed for axis arrows
@@ -41,17 +42,27 @@ export class ScreenSaverMaze extends Scene {
                 ambient: 1, diffusivity: 0.1, specularity: 0.1,
                 texture2: new Texture("assets/earth.gif", "NEAREST") // "NEAREST" 
             }),
-        ball: new Material(new defs.Phong_Shader(), {
-                ambient:1, 
-                diffusivity: 1, 
-                specularity: 1, 
-                color: hex_color("#ffffff")}),
+            ball: new Material(new defs.Phong_Shader(), {
+                    ambient:1, 
+                    diffusivity: 1, 
+                    specularity: 1, 
+                    color: hex_color("#ffffff")}),
+            texture_1: new Material(new Texture_Rotate(), {
+                color: hex_color("#000000"),
+                ambient: 1.0,
+                texture: new Texture("assets/stars.png", "NEAREST")
+            }),
+            texture_2: new Material(new Texture_Scroll_X(), {
+                color: hex_color("#000000"),
+                ambient: 1.0,
+                texture: new Texture("assets/redbrick.png", "LINEAR_MIPMAP_LINEAR")
+            }),
         };
         
         //POV camera location
         this.initial_camera_location = Mat4.look_at(vec3(0, 0, 10), vec3(0, 0, 0), vec3(0, 1, 0));
         //Scale factor of maze
-        this.scalefactor = 1;
+        this.scalefactor = 2;
         //Birds eye view of maze
         this.birds_eye_location = Mat4.look_at(vec3(0,10*this.scalefactor,0),vec3(0,0,0),vec3(0,0,-1))//.times(Mat4.translation(-12*this.scalefactor,-12*this.scalefactor,-4.5*this.scalefactor));
         this.isW95 = false;
@@ -98,10 +109,11 @@ export class ScreenSaverMaze extends Scene {
           /*A boundaries*/ 55: [75, 75.1, 0, 5, -13, 15], 56: [79, 79.1, 0, 5, -9, -1], 57: [79, 79.1, 0, 5, 3, 15],
                             58: [87, 87.1, 0, 5, -9, -1], 59: [87, 87.1, 0, 5, 3, 15], 60: [91, 91.1, 0, 5, -13, 15], 
                             61: [75, 91, 0, 5, -13.1, -13], 62: [79, 87, 0, 5, -9.1, -9], 63: [79, 87, 0, 5, -1.1, -1], 64: [79, 87, 0, 5, 3, 3.1], 
-          /*A misc boundaries*/ 65: [71, 75, 0, 5, 3, 3.1], 66: [83, 83.1, 0, 5, 7, 19], 67: [83, 87, 0, 5, 15, 15.1], 68: [91, 95, 0, 5, 11, 11.1]
+          /*A misc boundaries*/ 65: [71, 75, 0, 5, 3, 3.1], 66: [83, 83.1, 0, 5, 7, 19], 67: [83, 87, 0, 5, 15, 15.1], 68: [91, 95, 0, 5, 11, 11.1],
 
           };
 
+          this.colors = [];
     }
 
     make_control_panel() {
@@ -200,6 +212,25 @@ export class ScreenSaverMaze extends Scene {
         return crash;
     }
 
+    object_collision(colliders) {
+        let crash = false;
+
+        for (let i = 2; i < len+1; i++) {
+            if ( (player_pos[0] <= colliders[i][1] && player_pos[1] >= colliders[i][0]) && 
+                    (player_pos[2] <= colliders[i][3] && player_pos[3] >= colliders[i][2]) && 
+                    ( (player_pos[4] - 1.0) <= colliders[i][5] && (player_pos[5] - 1.0) >= colliders[i][4]) ) {
+                        /*console.log("-----");
+                        console.log("crash 1");
+                        console.log(player_pos);
+                        console.log(colliders[i]);
+                        console.log("-----");*/
+                        crash = true; 
+                        break;
+            }
+        }
+        return crash;
+    }
+
     draw_wall(context,program_state,model_transform,matl,inc,start_x,start_z,numtodraw){
         model_transform = Mat4.translation(start_x*this.scalefactor,0,start_z*this.scalefactor).times(model_transform);
 
@@ -211,18 +242,47 @@ export class ScreenSaverMaze extends Scene {
 
     }
 
-    draw_objects(context,program_state,model_transform,matl,start_x,start_z,num_to_draw) {
+    set_colors(num_to_draw) {
+       
+        for (let i = 0; i < num_to_draw; i++) {
+            this.colors[i] = color(Math.random(), Math.random(), Math.random(), 1);
+        }
+    }
 
+    set_opacity(opacity) {
+       
+        for (let i = 0; i < this.colors.length; i++) {
+            this.colors[i][3] = opacity;
+        }
+    }
+
+    draw_balls(context,program_state,model_transform,matl,start_x,start_z,num_to_draw) {
+
+        const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
         let gap = this.scalefactor/(num_to_draw+1)
         let ball_scale_factor = gap/5;
         model_transform = model_transform.times(Mat4.translation(0,gap,0))
                                          .times(Mat4.scale(ball_scale_factor,ball_scale_factor,ball_scale_factor))
-                                         .times(Mat4.translation(start_x*(this.scalefactor/ball_scale_factor),0,start_z*(this.scalefactor/ball_scale_factor)))
-                                         ;
-
+                                         .times(Mat4.translation(start_x*(this.scalefactor/ball_scale_factor),0,start_z*(this.scalefactor/ball_scale_factor)));
 
         for (let object_num = 0; object_num < num_to_draw; object_num++) {
-            this.shapes.ball.draw(context,program_state,model_transform,matl);
+            this.shapes.ball.draw(context,program_state,model_transform.times(Mat4.translation(0.45*this.scalefactor/ball_scale_factor*Math.sin(t*(object_num+1)), 0, 0)), matl.override({color:this.colors[object_num]}));
+            model_transform = Mat4.translation(0,gap,0).times(model_transform);
+        }
+
+    }
+
+    draw_cubes(context,program_state,model_transform,matl,start_x,start_z,num_to_draw) {
+
+        const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
+        let gap = this.scalefactor/(num_to_draw+1)
+        let cube_scale_factor = gap/5;
+        model_transform = model_transform.times(Mat4.translation(0,gap,0))
+                                         .times(Mat4.scale(cube_scale_factor,cube_scale_factor,cube_scale_factor))
+                                         .times(Mat4.translation(start_x*(this.scalefactor/cube_scale_factor),0,start_z*(this.scalefactor/cube_scale_factor)));
+                                         
+        for (let object_num = 0; object_num < num_to_draw; object_num++) {
+            this.shapes.box.draw(context,program_state,model_transform.times(Mat4.translation(0, 0, 0.44*this.scalefactor/cube_scale_factor*Math.sin(t*(object_num+1)))), matl);
             model_transform = Mat4.translation(0,gap,0).times(model_transform);
         }
 
@@ -488,12 +548,87 @@ export class ScreenSaverMaze extends Scene {
         // --------- DRAW OBJECT ---------
         // =============================
 
+        // the objects will appear for 4 seconds, and disapear for 1 second
+        let present_time = 5;
 
-        let ball_group_1 = model_transform.times(Mat4.translation(half,squish,half));
+        // objects within the U shape
+        let object_group_1 = model_transform.times(Mat4.translation(half,squish,half));
 
-        this.draw_objects(context,program_state,ball_group_1,this.materials.ball,0,1,5);
-        
+        if(Math.floor(t % present_time) != 0) {
+            this.set_opacity(1-Math.floor(t % present_time)/present_time);
+            this.draw_balls(context,program_state,object_group_1,this.materials.ball,1,4,5);
+            this.colliders[69] = [3, 7, 0, 5, 0, 2];
+        } else {
+            this.set_colors(5);
+            delete this.colliders[69];
+        }       
 
+        let object_group_2 = model_transform.times(Mat4.translation(half,squish,half));
+
+        if(Math.floor(t % present_time) != 0) {
+            
+            this.draw_cubes(context,program_state,object_group_2,this.materials.texture_1,2,7,3);
+            this.colliders[70] = [8.3, 10.1, 0, 5, 12, 14];
+        } else {
+            delete this.colliders[70];
+        }       
+
+        // objects within the C shape
+        let object_group_3 = model_transform.times(Mat4.translation(half,squish,half));
+
+        if(Math.floor(t % present_time) != 0) {
+            this.set_opacity(1-Math.floor(t % present_time)/present_time);
+            this.draw_balls(context,program_state,object_group_3,this.materials.ball,7,5,5);
+            this.colliders[71] = [26.6, 30, 0, 5, 4, 6];
+        } else {
+            this.set_colors(5);
+            delete this.colliders[71];
+        }       
+
+        let object_group_4 = model_transform.times(Mat4.translation(half,squish,half));
+
+        if(Math.floor(t % present_time) != 0) {
+            
+            this.draw_cubes(context,program_state,object_group_4,this.materials.texture_1,9,7,3);
+            this.colliders[72] = [35, 38, 0, 5, 11, 15];
+        } else {
+            delete this.colliders[72];
+        }       
+
+        // objects within the L shape
+        let object_group_5 = model_transform.times(Mat4.translation(half,squish,half));
+
+        if(Math.floor(t % present_time) != 0) {
+            this.set_opacity(1-Math.floor(t % present_time)/present_time);
+            this.draw_balls(context,program_state,object_group_5,this.materials.ball,13,4,5);
+            this.colliders[73] = [50, 53, 0, 5, 0, 2];
+        } else {
+            this.set_colors(5);
+            delete this.colliders[73];
+        }    
+
+        // objects within the A shape
+        let object_group_6 = model_transform.times(Mat4.translation(half,squish,half));
+
+        if(Math.floor(t % present_time) != 0) {
+            this.set_opacity(1-Math.floor(t % present_time)/present_time);
+            this.draw_balls(context,program_state,object_group_6,this.materials.ball,19,3,5);
+            this.colliders[74] = [77, 79, 0, 5, -4, -2];
+        } else {
+            this.set_colors(5);
+            delete this.colliders[74];
+        }
+
+
+        let object_group_7 = model_transform.times(Mat4.translation(half,squish,half));
+
+        if(Math.floor(t % present_time) != 0) {
+            
+            this.draw_cubes(context,program_state,object_group_7,this.materials.texture_1,21,4,3);
+            this.colliders[75] = [84, 86, 0, 5, -1, 3];
+        } else {
+            delete this.colliders[75];
+        } 
     }
 }
 
@@ -700,3 +835,69 @@ class Ring_Shader extends Shader {
     }
 }
 
+class Texture_Rotate extends Textured_Phong {
+    // TODO:  Modify the shader below (right now it's just the same fragment shader as Textured_Phong) for requirement #7.
+    fragment_glsl_code() {
+        return this.shared_glsl_code() + `
+            varying vec2 f_tex_coord;
+            uniform sampler2D texture;
+            uniform float animation_time;
+            void main(){
+                // Sample the texture image in the correct place:
+                float rotation_factor = -animation_time * (3.1415926535) / 2.0;
+                vec2 shift_tex_coord = vec2(f_tex_coord.x - 0.5, f_tex_coord.y-0.5);
+                vec2 rotate_tex_coord = vec2(shift_tex_coord.x*cos(rotation_factor)-shift_tex_coord.y*sin(rotation_factor), shift_tex_coord.x*sin(rotation_factor)+shift_tex_coord.y*cos(rotation_factor));
+                vec4 tex_color = texture2D( texture, rotate_tex_coord);
+
+                // shift_tex_coord = vec2(rotate_tex_coord.x + 0.5, rotate_tex_coord.y+0.5);
+                
+                // float u = mod(shift_tex_coord.x, 1.0);
+                // float v = mod(shift_tex_coord.y, 1.0);
+                // if ((u > 0.75 && u < 0.85 && v > 0.15 && v < 0.85) ||
+                //     (u > 0.15 && u < 0.25 && v > 0.15 && v < 0.85) ||
+                //     (u > 0.25 && u < 0.75 && v > 0.15 && v < 0.25) ||
+                //     (u > 0.25 && u < 0.75 && v > 0.75 && v < 0.85)) {
+                //     tex_color = vec4(0, 0, 0, 1.0);
+                // }                
+
+                if( tex_color.w < .01 ) discard;
+                                                                         // Compute an initial (ambient) color:
+                gl_FragColor = vec4( ( tex_color.xyz + shape_color.xyz ) * ambient, shape_color.w * tex_color.w ); 
+                                                                         // Compute the final color with contributions from lights:
+                gl_FragColor.xyz += phong_model_lights( normalize( N ), vertex_worldspace );
+        } `;
+
+    }
+}
+
+class Texture_Scroll_X extends Textured_Phong {
+    // TODO:  Modify the shader below (right now it's just the same fragment shader as Textured_Phong) for requirement #6.
+    fragment_glsl_code() {
+        return this.shared_glsl_code() + `
+            varying vec2 f_tex_coord;
+            uniform sampler2D texture;
+            uniform float animation_time;
+            
+            void main(){
+                // Sample the texture image in the correct place:
+                float shift_factor = animation_time * -2.0;
+                vec2 shift_tex_coord = vec2(f_tex_coord.x+shift_factor , f_tex_coord.y);
+                vec4 tex_color = texture2D( texture, shift_tex_coord);
+
+                // float u = mod(shift_tex_coord.x, 1.0);
+                // float v = mod(shift_tex_coord.y, 1.0);
+                // if ((u > 0.75 && u < 0.85 && v > 0.15 && v < 0.85) ||
+                //     (u > 0.15 && u < 0.25 && v > 0.15 && v < 0.85) ||
+                //     (u > 0.25 && u < 0.75 && v > 0.15 && v < 0.25) ||
+                //     (u > 0.25 && u < 0.75 && v > 0.75 && v < 0.85)) {
+                //     tex_color = vec4(0, 0, 0, 1.0);
+                // }                
+
+                if( tex_color.w < .01 ) discard;
+                                                                         // Compute an initial (ambient) color:
+                gl_FragColor = vec4( ( tex_color.xyz + shape_color.xyz ) * ambient, shape_color.w * tex_color.w ); 
+                                                                         // Compute the final color with contributions from lights:
+                gl_FragColor.xyz += phong_model_lights( normalize( N ), vertex_worldspace );
+        } `;
+    }
+}
