@@ -35,7 +35,8 @@ export class ScreenSaverMaze extends Scene {
         this.materials = {
             plastic: new Material(new defs.Phong_Shader(),{
                 ambient: 0.7,
-                diffusivity: 0,
+                diffusivity: 0.7,
+                specularity: 0.1,
                 color: hex_color("#ffffff")
             }),
             yellowfloor: new Material(new Textured_Phong(), {
@@ -73,6 +74,41 @@ export class ScreenSaverMaze extends Scene {
                 ambient: 1, diffusivity: 0.1, specularity: 0.1,
                 texture: new Texture("assets/UCLAp.jpg", "NEAREST")
             }),
+            beg1: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"), //opaque black
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/beg1.png", "NEAREST")
+            }),
+            beg2: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"), //opaque black
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/beg2.png", "NEAREST")
+            }),
+            beg3: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"), //opaque black
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/beg3.png", "NEAREST")
+            }),
+            end1: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"), //opaque black
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/end1.png", "NEAREST")
+            }),
+            end2: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"), //opaque black
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/end2.png", "NEAREST")
+            }),
+            end3: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"), //opaque black
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/end3.png", "NEAREST")
+            }),
+            w95ptg: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"), //opaque black
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/opengl.jpg", "NEAREST")
+            }),
             skycolor: new Material(new defs.Phong_Shader(),{
                 ambient: 1,
                 diffusivity: 1,
@@ -81,6 +117,7 @@ export class ScreenSaverMaze extends Scene {
             grassgreen: new Material(new defs.Phong_Shader(),{
                 ambient: 1,
                 diffusivity: 0,
+                specularity: 0,
                 color: hex_color("#7EC850") // grass green hex
             }),
             nightsky: new Material(new defs.Phong_Shader(),{
@@ -106,12 +143,12 @@ export class ScreenSaverMaze extends Scene {
             texture_1: new Material(new Texture_Rotate_1(), {
                 color: hex_color("#000000"),
                 ambient: 1.0,
-                texture: new Texture("assets/att1.jpg", "NEAREST")
+                texture: new Texture("assets/hypno.jpg", "NEAREST")
             }),
             texture_2: new Material(new Texture_Scroll_X(), {
                 color: hex_color("#000000"),
                 ambient: 1.0,
-                texture: new Texture("assets/redbrick.png", "LINEAR_MIPMAP_LINEAR")
+                texture: new Texture("assets/item.png", "LINEAR_MIPMAP_LINEAR")
             }),
         };
         
@@ -133,7 +170,7 @@ export class ScreenSaverMaze extends Scene {
         this.slidenum = 0;
         
         //Omar: alternate birds eye location 
-        this.bird_transform = Mat4.identity().times(Mat4.translation(24, 33, 10));
+        this.bird_transform = Mat4.identity().times(Mat4.translation(24, 40, 10));
         this.bird_transform = this.bird_transform.times(Mat4.rotation(-1.57, 1, 0, 0));
         this.bird = this.bird_transform;
 
@@ -145,7 +182,7 @@ export class ScreenSaverMaze extends Scene {
         this.look_backward = false; 
 
         //help mode flag (tells whether we want to draw the player sphere or not)
-        this.help_mode = true;
+        this.help_mode = false;
 
         //1 is facing forward (towards top of maze)
         //2 is facing right 
@@ -154,11 +191,14 @@ export class ScreenSaverMaze extends Scene {
         this.facing = 4; 
 
         //this is the player (key will always be 1)
-        this.me_transform = Mat4.identity().times(Mat4.translation(1, 0.5, 17));
+        this.me_transform = Mat4.identity().times(Mat4.translation(1, 0.8, 17));
         this.me_transform = this.me_transform.times(Mat4.scale(.5, .5, .5));
         this.me_transform = this.me_transform.times(Mat4.translation(6, 0, 0));
         this.me_transform = this.me_transform.times(Mat4.rotation(1.57, 0, 1, 0));
         this.me = this.me_transform;
+        
+        // initialize so that it's not null when game starts
+        this.attached = () => this.me
 
         //dictionary of every object in our world 
         //keep a key for every object, and the space it occupies in our world 
@@ -229,6 +269,7 @@ export class ScreenSaverMaze extends Scene {
             this.isUCLA = false;
             this.isNight = false;
         });
+        this.new_line();
         this.key_triggered_button("Display: Navigate Boelter Hall", ["2"], ()=>{
             // Turns on Boelter Hall settings.
             this.isW95 = false;
@@ -264,10 +305,30 @@ export class ScreenSaverMaze extends Scene {
             this.attached = () => this.me;
             this.help_mode = false;
         });
+        this.key_triggered_button("Restart", ["r"], () => {
+            this.me_transform = Mat4.identity().times(Mat4.translation(1, 0.8, 17));            
+            this.me_transform = this.me_transform.times(Mat4.scale(.5, .5, .5));
+            this.me_transform = this.me_transform.times(Mat4.translation(6, 0, 0));
+            this.facing = 4;
+            this.me_transform = this.me_transform.times(Mat4.rotation(1.57, 0, 1, 0));
+            this.me = this.me_transform; 
+            this.colliders[1] = [6.5, 7.5, 0, 1, 16.5, 17.5];
+        });
+        this.key_triggered_button("Finish", ["f"], () => {
+            this.me_transform = Mat4.identity().times(Mat4.translation(1, 0.8, 17));            
+            this.me_transform = this.me_transform.times(Mat4.scale(.5, .5, .5));
+            this.me_transform = this.me_transform.times(Mat4.translation(89, 0, 0));
+            this.facing = 2;
+            this.me_transform = this.me_transform.times(Mat4.rotation(-1.57, 0, 1, 0));
+            this.me = this.me_transform; 
+            this.colliders[1] = [89.5, 90.5, 0, 1, 16.5, 17.5];
+        });
+        
+        this.new_line();
         this.new_line();
         this.key_triggered_button("Turn Right", ["l"], () => {
             this.look_right = !(this.look_right);
-        }); 
+        });
         this.key_triggered_button("Turn Left", ["j"], () => {
             this.look_left = !(this.look_left);
         }); 
@@ -282,15 +343,7 @@ export class ScreenSaverMaze extends Scene {
         this.key_triggered_button("Move Backward", ["k"], () => {
             this.move_backward = !(this.move_backward);
         });
-        this.key_triggered_button("Restart", ["r"], () => {
-            this.me_transform = Mat4.identity().times(Mat4.translation(1, 0.5, 17));            
-            this.me_transform = this.me_transform.times(Mat4.scale(.5, .5, .5));
-            this.me_transform = this.me_transform.times(Mat4.translation(6, 0, 0));
-            this.facing = 4;
-            this.me_transform = this.me_transform.times(Mat4.rotation(1.57, 0, 1, 0));
-            this.me = this.me_transform; 
-            this.colliders[1] = [6.5, 7.5, 0, 1, 16.5, 17.5];
-        });
+        
 
 
     }
@@ -436,6 +489,9 @@ export class ScreenSaverMaze extends Scene {
             //program_state.set_camera(this.initial_camera_location.times(Mat4.translation(0,-2,-20)));
             program_state.set_camera(this.birds_eye_location.times(Mat4.translation(-12*this.scalefactor,-12*this.scalefactor,-4.5*this.scalefactor)));
             //program_state.set_camera(this.birds_eye_location);
+
+            let desired = Mat4.inverse(this.me.times(Mat4.translation(0, 0.5, -0.5)));
+            program_state.set_camera(desired);
         }
 
         // Initialize projection transform
@@ -446,7 +502,7 @@ export class ScreenSaverMaze extends Scene {
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
         // LIGHTING
-        const light_position = vec4(-10, 201, -10, 1);
+        const light_position = vec4(24, 201, 9, 1);
         // The parameters of the Light are: position, color, size
         if (!this.isNight){
             program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 50000)];
@@ -589,6 +645,8 @@ export class ScreenSaverMaze extends Scene {
         // specify default plastic materials
         let yellowdef = this.materials.plastic.override({color:yellow});
         let bluedef = this.materials.plastic.override({color:blue});
+        let beg = this.materials.beg1;
+        let end = this.materials.end1;
         
         // specify material placeholder variables
         let wallMatl = this.materials.UCLAwall;
@@ -605,6 +663,8 @@ export class ScreenSaverMaze extends Scene {
             wallMatl = this.materials.UCLAwall;
             floorMatl = this.materials.UCLAfloor;
             blueMatl = bluedef;
+            beg = this.materials.beg2;
+            end = this.materials.end2;
             for (let i = 0; i < 24; i++){
                 this.draw_wall(context,program_state,ceiling,this.materials.UCLAfloor,inc_z,i,0,9);
                 }
@@ -614,12 +674,16 @@ export class ScreenSaverMaze extends Scene {
             wallMatl = this.materials.outsidewall;
             floorMatl = yellowdef;
             blueMatl = bluedef;
+            beg = this.materials.beg1;
+            end = this.materials.end1;
         }
         // Switch to night theme
         if (this.isNight){
             wallMatl = this.materials.nightwall;
             floorMatl = yellowdef.override({ambient:0.6});
             blueMatl = bluedef.override({ambient:0.6});
+            beg = this.materials.beg3;
+            end = this.materials.end3;
         }
         // Switch to Windows95 theme (TODO: switch balls to Gouraud Shader)
         if (this.isW95){
@@ -627,6 +691,8 @@ export class ScreenSaverMaze extends Scene {
             blueMatl = floorMatl;
             wallMatl = this.materials.redbrick;
             ballMatl = this.materials.flat_ball;
+            beg = this.materials.w95ptg;
+            end = this.materials.w95ptg;
             for (let i = 0; i < 24; i++){
                 this.draw_wall(context,program_state,ceiling,this.materials.greyceiling,inc_z,i,0,9);
                 }
@@ -638,8 +704,8 @@ export class ScreenSaverMaze extends Scene {
         }
 
         //draw starting and finishing wall:
-        this.draw_wall(context,program_state,wall_yz,this.materials.plastic,inc_z,0,8,1);
-        this.draw_wall(context,program_state,wall_yz,this.materials.plastic,inc_z,25,8,1);
+        this.draw_wall(context,program_state,wall_yz,beg,inc_z,0,8,1);
+        this.draw_wall(context,program_state,wall_yz,end,inc_z,25,8,1);
 
         //draw boundary walls
 
@@ -800,7 +866,7 @@ export class ScreenSaverMaze extends Scene {
 
         if(Math.floor(t % present_time) != 0) {
             
-            this.draw_cubes(context,program_state,object_group_2,this.materials.texture_1,2,7,3);
+            this.draw_cubes(context,program_state,object_group_2,this.materials.texture_2,2,7,3);
             this.colliders[71] = [8.3, 10.1, 0, 5, 12, 14];
         } else {
             delete this.colliders[71];
@@ -857,7 +923,7 @@ export class ScreenSaverMaze extends Scene {
 
         if(Math.floor(t % present_time) != 0) {
             
-            this.draw_cubes(context,program_state,object_group_7,this.materials.texture_1,21,4,3);
+            this.draw_cubes(context,program_state,object_group_7,this.materials.texture_2,21,4,3);
             this.colliders[76] = [84, 86, 0, 5, -1, 3];
         } else {
             delete this.colliders[76];
@@ -1068,41 +1134,6 @@ class Ring_Shader extends Shader {
     }
 }
 
-class Texture_Rotate extends Textured_Phong {
-    // TODO:  Modify the shader below (right now it's just the same fragment shader as Textured_Phong) for requirement #7.
-    fragment_glsl_code() {
-        return this.shared_glsl_code() + `
-            varying vec2 f_tex_coord;
-            uniform sampler2D texture;
-            uniform float animation_time;
-            void main(){
-                // Sample the texture image in the correct place:
-                float rotation_factor = -animation_time * (3.1415926535) / 2.0;
-                vec2 shift_tex_coord = vec2(f_tex_coord.x - 0.5, f_tex_coord.y-0.5);
-                vec2 rotate_tex_coord = vec2(shift_tex_coord.x*cos(rotation_factor)-shift_tex_coord.y*sin(rotation_factor), shift_tex_coord.x*sin(rotation_factor)+shift_tex_coord.y*cos(rotation_factor));
-                vec4 tex_color = texture2D( texture, rotate_tex_coord);
-
-                // shift_tex_coord = vec2(rotate_tex_coord.x + 0.5, rotate_tex_coord.y+0.5);
-                
-                // float u = mod(shift_tex_coord.x, 1.0);
-                // float v = mod(shift_tex_coord.y, 1.0);
-                // if ((u > 0.75 && u < 0.85 && v > 0.15 && v < 0.85) ||
-                //     (u > 0.15 && u < 0.25 && v > 0.15 && v < 0.85) ||
-                //     (u > 0.25 && u < 0.75 && v > 0.15 && v < 0.25) ||
-                //     (u > 0.25 && u < 0.75 && v > 0.75 && v < 0.85)) {
-                //     tex_color = vec4(0, 0, 0, 1.0);
-                // }                
-
-                if( tex_color.w < .01 ) discard;
-                                                                         // Compute an initial (ambient) color:
-                gl_FragColor = vec4( ( tex_color.xyz + shape_color.xyz ) * ambient, shape_color.w * tex_color.w ); 
-                                                                         // Compute the final color with contributions from lights:
-                gl_FragColor.xyz += phong_model_lights( normalize( N ), vertex_worldspace );
-        } `;
-
-    }
-}
-
 class Texture_Scroll_X extends Textured_Phong {
     // TODO:  Modify the shader below (right now it's just the same fragment shader as Textured_Phong) for requirement #6.
     fragment_glsl_code() {
@@ -1155,7 +1186,7 @@ class Texture_Rotate_1 extends Textured_Phong {
                 // 15 RPM corresponds to PI/2 rad/s, our angular freq.
                 float x = f_tex_coord.x-0.5;
                 float y = f_tex_coord.y-0.5;
-                vec2 f_tex_coord = vec2((x*cos(-reduced_time*PI/2.0)-y*sin(-PI/2.0*reduced_time)+0.5),(x*sin(-PI/2.0*reduced_time)+y*cos(-PI/2.0*reduced_time)+0.5));
+                vec2 f_tex_coord = vec2((x*cos(-reduced_time*PI)-y*sin(-PI*reduced_time)+0.5),(x*sin(-PI*reduced_time)+y*cos(-PI*reduced_time)+0.5));
                                 
                 // Sample the texture image in the correct place:
                 vec4 tex_color = texture2D( texture, f_tex_coord );
