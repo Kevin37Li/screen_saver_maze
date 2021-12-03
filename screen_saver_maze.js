@@ -469,6 +469,7 @@ export class ScreenSaverMaze extends Scene {
 
     }
 
+    // set colors for the spheres
     set_colors(num_to_draw) {
        
         for (let i = 0; i < num_to_draw; i++) {
@@ -476,6 +477,7 @@ export class ScreenSaverMaze extends Scene {
         }
     }
 
+    // set opacity level for the spheres
     set_opacity(opacity) {
        
         for (let i = 0; i < this.colors.length; i++) {
@@ -483,16 +485,22 @@ export class ScreenSaverMaze extends Scene {
         }
     }
 
+    // draw spheres onto the screen at the given position with start_x and start_z
+    // num_to_draw: the number of spheres to drawing at the given position
+    // is_95: the variable indicating if the current mode is windows 95
     draw_balls(context,program_state,model_transform,matl,start_x,start_z,num_to_draw,isW95) {
 
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
+        // the distance gap between each object in the y direction
         let gap = this.scalefactor/(num_to_draw+1)
+        // scale the object according to the gap, so objects won't be too crowded
         let ball_scale_factor = gap/5;
         model_transform = model_transform.times(Mat4.translation(0,gap,0))
                                          .times(Mat4.scale(ball_scale_factor,ball_scale_factor,ball_scale_factor))
                                          .times(Mat4.translation(start_x*(this.scalefactor/ball_scale_factor),0,start_z*(this.scalefactor/ball_scale_factor)));
 
         for (let object_num = 0; object_num < num_to_draw; object_num++) {
+            // if the current mode is windows 95, make the spheres appear flatter
             if(isW95) {
                 this.shapes.flat_ball.draw(context,program_state,model_transform.times(Mat4.translation(0.45*this.scalefactor/ball_scale_factor*Math.sin(t*(object_num+1)), 0, 0)), matl.override({color:this.colors[object_num]}));
             } else {
@@ -503,10 +511,14 @@ export class ScreenSaverMaze extends Scene {
 
     }
 
+    // draw cubes onto the screen at the given position with start_x and start_z
+    // num_to_draw: the number of cubes to drawing at the given position
     draw_cubes(context,program_state,model_transform,matl,start_x,start_z,num_to_draw) {
 
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
+        // the distance gap between each object in the y direction
         let gap = this.scalefactor/(num_to_draw+1)
+        // scale the object according to the gap, so objects won't be too crowded
         let cube_scale_factor = gap/5;
         model_transform = model_transform.times(Mat4.translation(0,gap,0))
                                          .times(Mat4.scale(cube_scale_factor,cube_scale_factor,cube_scale_factor))
