@@ -109,6 +109,46 @@ export class ScreenSaverMaze extends Scene {
                 ambient: 1, diffusivity: 0.1, specularity: 0.1,
                 texture: new Texture("assets/opengl.jpg", "NEAREST")
             }),
+            slide1: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"), //opaque black
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/slide1.png", "NEAREST")
+            }),
+            slide2: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"), //opaque black
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/slide2.png", "NEAREST")
+            }),
+            slide3: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"), //opaque black
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/slide3.png", "NEAREST")
+            }),
+            slide4: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"), //opaque black
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/slide4.png", "NEAREST")
+            }),
+            slide5: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"), //opaque black
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/slide5.png", "NEAREST")
+            }),
+            slide6: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"), //opaque black
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/slide6.png", "NEAREST")
+            }),
+            slide7: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"), //opaque black
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/slide7.png", "NEAREST")
+            }),
+            slide8: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"), //opaque black
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/slide8.png", "NEAREST")
+            }),
             skycolor: new Material(new defs.Phong_Shader(),{
                 ambient: 1,
                 diffusivity: 1,
@@ -166,7 +206,7 @@ export class ScreenSaverMaze extends Scene {
 
         //Slide stuff
         this.isPres = false;
-        this.slidearray = [this.materials.texture_1,this.materials.texture_2,this.materials.greyceiling]; // 8 slides
+        this.slidearray = [this.materials.slide1,this.materials.slide2,this.materials.slide3,this.materials.slide4,this.materials.slide5,this.materials.slide6,this.materials.slide7,this.materials.slide8]; // 8 slides
         this.slidenum = 0;
         
         //Omar: alternate birds eye location 
